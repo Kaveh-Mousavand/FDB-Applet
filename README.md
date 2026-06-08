@@ -321,9 +321,7 @@ which is the simplest non-trivial example and produces a small, readable output 
 
 ## **5. Online version**
 
-For users who would like to try the FDB Applet without installing anything, a fully self-contained, in-browser version is included in this zip as `fd_applet_browser.html`.
-
-To use it, simply double-click the file **[`fd_applet_browser.html`](./fd_applet_browser.html)**. It will open in your default web browser and run the entire applet locally in the browser via [Pyodide](https://pyodide.org/) (CPython compiled to WebAssembly). The first time you open it, the page may take 10–20 seconds to download the Pyodide runtime (about 10 MB); subsequent loads are near-instant because the runtime is cached by your browser.
+For users who would like to try the FDB Applet without installing anything, a fully self-contained, in-browser version is available. To use it, simply double-click on **[`FDB_Applet_browser.html`](https://kaveh-mousavand.github.io/FDB-Applet/fd_applet_browser.html)**. It will open in your default web browser and run the entire applet locally in the browser via [Pyodide](https://pyodide.org/) (CPython compiled to WebAssembly). The first time you open it, the page may take 10–20 seconds to download the Pyodide runtime (about 10 MB); subsequent loads are near-instant because the runtime is cached by your browser.
 
 **Remark.** Please note that the online version is usually slower than the installed versions. Moreover, the online version may run into some connection issues — in particular, the first load requires an internet connection in order to fetch the Pyodide runtime, and some corporate networks or browser configurations may block this download. If you cannot get the online version to work, please use the installed (desktop) version described in [§2](#2-installation) above.
 
