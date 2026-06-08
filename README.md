@@ -342,14 +342,14 @@ The FDB Applet is distributed publicly via the developer's GitHub repository. A 
                   algebras},
   year         = {2026},
   version      = {1.0},
-  howpublished = {\url{https://github.com/kaveh-mousavand/fdb-applet}},
+  howpublished = {\url{https://github.com/Kaveh-Mousavand/FDB-Applet}},
   note         = {Contact: \texttt{kaveh.mousavand@oist.jp}}
 }
 ```
 
 A plain-text citation, suitable for journals that do not accept BibTeX:
 
-> Mousavand, K. *The FDB Applet: a computational tool for the representation theory of gentle, string, and biserial algebras*, version 1.0, June 2026. Available at <https://github.com/kaveh-mousavand/fdb-applet>. Contact: [kaveh.mousavand@oist.jp](mailto:kaveh.mousavand@oist.jp).
+> Mousavand, K. *The FDB Applet: a computational tool for the representation theory of gentle, string, and biserial algebras*, version 1.0, June 2026. Available at <https://github.com/Kaveh-Mousavand/FDB-Applet>. Contact: [kaveh.mousavand@oist.jp](mailto:kaveh.mousavand@oist.jp).
 
 When a permanent DOI becomes available, this entry will be updated; please check the latest version of the README for the most up-to-date citation information.
 
