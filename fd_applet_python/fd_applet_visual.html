@@ -1,0 +1,1920 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FDB Applet — Finite Dimensional Algebra Brick Explorer</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}]});"></script>
+<style>
+:root{--bg:#0f0e0c;--surface:#1a1916;--surface2:#242220;--border:#2e2c29;--accent:#d4a853;--accent2:#7eb8a4;--accent3:#c96b8a;--accent4:#9f8fda;--text:#e8e4dc;--muted:#6a6560;--error:#c96b5a;--success:#7eb8a4;--green:#7ed47e;--red:#e85a4a;--yellow:#e8c84a;--pink:#ff8fb8;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:'DM Mono',monospace;height:100vh;display:grid;grid-template-rows:52px 1fr;grid-template-columns:1fr 380px;overflow:hidden;}
+header{grid-column:1/-1;display:flex;align-items:center;padding:0 18px;border-bottom:1px solid var(--border);gap:12px;background:var(--surface);}
+h1{font-family:'Fraunces',serif;font-size:20px;font-weight:300;color:var(--accent);}
+.sep{width:1px;height:24px;background:var(--border);}
+.toolbar{display:flex;gap:5px;}
+.tool-btn{background:var(--surface2);border:1px solid var(--border);color:var(--muted);padding:5px 11px;border-radius:4px;cursor:pointer;font-family:'DM Mono',monospace;font-size:11px;transition:all .15s;}
+.tool-btn:hover{border-color:var(--accent2);color:var(--accent2);}
+.tool-btn.active{background:var(--accent);color:#0f0e0c;border-color:var(--accent);}
+.tool-btn.danger:hover{border-color:var(--error);color:var(--error);}
+.hdr-right{margin-left:auto;display:flex;align-items:center;gap:10px;}
+.btn-run{background:var(--accent);border:none;color:#0f0e0c;padding:7px 16px;border-radius:4px;cursor:pointer;font-family:'DM Mono',monospace;font-size:12px;font-weight:500;transition:opacity .15s;}
+.btn-run:hover{opacity:.85;}
+.btn-run:disabled{opacity:.4;cursor:not-allowed;}
+.mode-pill{font-size:10px;letter-spacing:1px;text-transform:uppercase;padding:4px 9px;border-radius:20px;background:var(--surface2);border:1px solid var(--border);color:var(--muted);}
+#canvas-wrap{position:relative;overflow:hidden;background:var(--bg);background-image:radial-gradient(circle,#2a2825 1px,transparent 1px);background-size:28px 28px;cursor:crosshair;}
+#canvas-wrap.mode-select{cursor:default;}
+svg#qsvg{width:100%;height:100%;position:absolute;top:0;left:0;}
+.vtx-g{cursor:pointer;}
+.vtx-circle{fill:#1a2333;stroke:#4a90d4;stroke-width:2;filter:drop-shadow(0 2px 6px rgba(74,144,212,.25));transition:fill .15s,stroke .15s;}
+.vtx-g:hover .vtx-circle{stroke:var(--accent);fill:#1e2a1e;}
+.vtx-g.sel .vtx-circle{stroke:var(--accent);stroke-width:3;fill:#1e2a20;}
+.vtx-label{fill:var(--text);font-family:'Fraunces',serif;font-size:14px;text-anchor:middle;dominant-baseline:central;pointer-events:none;user-select:none;}
+.ar-g{cursor:pointer;}
+.ar-path{stroke:var(--accent);stroke-width:2;fill:none;marker-end:url(#ah);}
+.ar-g:hover .ar-path,.ar-g.sel .ar-path{stroke:var(--accent2);marker-end:url(#ah2);}
+.ar-label{fill:var(--accent);font-family:'DM Mono',monospace;font-size:11px;text-anchor:middle;pointer-events:none;user-select:none;}
+.ar-g:hover .ar-label,.ar-g.sel .ar-label{fill:var(--accent2);}
+#ghost-ar{stroke:var(--accent2);stroke-width:1.5;stroke-dasharray:6 4;fill:none;pointer-events:none;opacity:.6;}
+.ar-overlay-circle{fill:#1a1e2a;stroke-width:1.5;}
+.ar-overlay-text{fill:var(--text);font-family:'DM Mono',monospace;font-size:9px;text-anchor:middle;dominant-baseline:central;pointer-events:none;}
+.ar-overlay-arrow{stroke:#4a70d4;stroke-width:1.5;fill:none;marker-end:url(#ah-ar);}
+.tau-arrow{stroke:var(--accent3);stroke-width:1.5;fill:none;stroke-dasharray:5 3;marker-end:url(#ah-tau);}
+.panel-right{border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;}
+.panel-tabs{display:flex;border-bottom:1px solid var(--border);background:var(--surface);flex-shrink:0;}
+.tab{flex:1;padding:9px 4px;text-align:center;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+.tab:hover:not(.active){color:var(--text);}
+.tab-content{display:none;flex:1;overflow-y:auto;padding:14px;}
+.tab-content.active{display:flex;flex-direction:column;gap:10px;}
+.sec{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--accent);margin-bottom:8px;padding-bottom:5px;border-bottom:1px solid var(--border);}
+label{font-size:10px;color:var(--muted);display:block;margin-bottom:4px;}
+input[type=text]{width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:'DM Mono',monospace;font-size:12px;padding:6px 9px;border-radius:3px;outline:none;}
+input[type=text]:focus{border-color:var(--accent);}
+.field{margin-bottom:9px;}
+.hint{font-size:10px;color:var(--muted);margin-top:3px;}
+.empty{color:var(--muted);font-size:12px;text-align:center;padding:30px 10px;line-height:2;}
+.card{background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:11px;}
+.card-title{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--accent);margin-bottom:9px;}
+.btn-del{background:none;border:1px solid var(--border);color:var(--error);padding:6px;border-radius:3px;cursor:pointer;font-family:'DM Mono',monospace;font-size:11px;width:100%;transition:all .15s;}
+.btn-del:hover{background:#2a1510;border-color:var(--error);}
+.btn-icon{background:none;border:1px solid var(--border);color:var(--muted);width:26px;height:26px;border-radius:3px;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;}
+.btn-icon:hover{border-color:var(--error);color:var(--error);}
+.btn-add{background:none;border:1px dashed var(--border);color:var(--muted);width:100%;padding:6px;border-radius:3px;cursor:pointer;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1px;transition:all .15s;}
+.btn-add:hover{border-color:var(--accent2);color:var(--accent2);}
+.rel-row{display:flex;gap:5px;align-items:center;margin-bottom:5px;}
+.rel-row input{flex:1;font-size:11px;}
+.eq{color:var(--accent);padding:0 3px;font-size:13px;}
+
+/* ───────── 9-tile RESULTS grid ───────── */
+.tile-grid{display:grid;grid-template-columns:repeat(3,1fr);grid-auto-rows:1fr;gap:7px;width:100%;min-height:340px;}
+.tile{background:#2a2825;color:#fff;border:1px solid var(--border);border-radius:5px;cursor:pointer;display:flex;align-items:center;justify-content:center;text-align:center;font-family:'DM Mono',monospace;font-size:10.5px;font-weight:500;letter-spacing:.4px;line-height:1.32;padding:10px 7px;min-height:62px;transition:background .15s,color .15s,border-color .15s,transform .1s;word-break:keep-all;overflow-wrap:normal;hyphens:none;}
+.tile:hover{background:var(--yellow);color:#0f0e0c;border-color:var(--yellow);}
+.tile.clicked{background:#3a8a3a;color:#fff;border-color:#3a8a3a;}
+.tile-back{background:#ff9800;border:1px solid #d97a00;color:#000;font-weight:700;padding:5px 12px;border-radius:3px;cursor:pointer;font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.4px;}
+.tile-back:hover{background:#ffb84d;border-color:#000;color:#000;}
+.zoom-btn{background:#ffe680 !important;border:1px solid #d4ba60 !important;color:#000 !important;font-weight:700 !important;width:26px;height:22px;border-radius:3px;cursor:pointer;font-size:14px;font-family:'DM Mono',monospace;display:flex;align-items:center;justify-content:center;}
+.zoom-btn:hover{background:#fff0a8 !important;}
+.tau-letter{font-family:Georgia,serif;font-style:italic;font-weight:500;}
+.max-tag{color:var(--pink);font-weight:700;}
+.popover-header{background:var(--surface2);padding:5px 8px;margin:-9px -9px 7px -9px;border-bottom:1px solid var(--border);font-size:10px;letter-spacing:.5px;color:var(--accent);cursor:move;user-select:none;display:flex;justify-content:space-between;align-items:center;}
+.popover-header .pop-close{cursor:pointer;color:var(--muted);font-size:13px;line-height:1;padding:0 4px;}
+.popover-header .pop-close:hover{color:var(--error);}
+.tile-title{font-family:'Fraunces',serif;font-weight:600;font-size:18px;color:var(--accent);}
+.tile-view{display:flex;flex-direction:column;gap:10px;}
+.compute-bar{display:flex;flex-wrap:wrap;gap:5px;}
+.btn-c{background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:5px 9px;border-radius:3px;cursor:pointer;font-family:'DM Mono',monospace;font-size:10px;transition:all .15s;}
+.btn-c:hover{border-color:var(--accent2);color:var(--accent2);}
+.btn-c:disabled{opacity:.35;cursor:not-allowed;}
+.rblock{background:var(--surface2);border:1px solid var(--border);border-radius:4px;overflow:hidden;animation:fi .2s ease;}
+@keyframes fi{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+.rhead{padding:7px 11px;background:var(--surface);border-bottom:1px solid var(--border);font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--accent);display:flex;justify-content:space-between;align-items:center;gap:8px;}
+.rbody{padding:11px;}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;font-size:12px;}
+.kk{color:var(--muted);}
+.vv{color:var(--text);}
+.vv.good,.true{color:var(--green);font-weight:600;}
+.vv.warn,.false{color:var(--red);font-weight:700;}
+.finite{color:var(--green);font-weight:600;}
+.infinite{color:var(--red);font-weight:700;}
+.tbl{width:100%;border-collapse:collapse;font-size:11px;}
+.tbl th{text-align:left;padding:4px 7px;color:var(--muted);font-weight:400;font-size:9px;letter-spacing:1px;text-transform:uppercase;border-bottom:1px solid var(--border);}
+.tbl td{padding:4px 7px;border-bottom:1px solid #1e1c1a;}
+.tbl tr:last-child td{border-bottom:none;}
+.tbl tr:hover td{background:var(--surface);}
+.tag{display:inline-block;font-size:8px;padding:1px 4px;border-radius:2px;letter-spacing:.5px;text-transform:uppercase;margin-left:3px;}
+.tp{background:#2a1e08;color:var(--accent);}
+.ti{background:#0a1e1a;color:var(--accent2);}
+.mtbl{border-collapse:collapse;font-size:10px;}
+.mtbl th,.mtbl td{padding:3px 6px;border:1px solid var(--border);text-align:center;}
+.mtbl th{background:var(--surface);color:var(--muted);font-size:9px;cursor:context-menu;}
+.mtbl td{cursor:context-menu;}
+.mtbl td.nz{color:var(--accent);font-weight:500;}
+.mtbl td.max{color:var(--pink);font-weight:700;background:#3a1a2a40;}
+.scroll-x{overflow-x:auto;}
+.pill-row{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:6px;padding-bottom:6px;border-bottom:1px solid var(--border);}
+.pill-row:last-child{border-bottom:none;}
+.pill{background:var(--surface);border:1px solid var(--border);border-radius:3px;padding:2px 7px;font-size:11px;}
+.cycle-item{background:var(--surface);border:1px solid var(--border);border-radius:3px;padding:6px 9px;margin-bottom:5px;font-size:11px;}
+.ca{color:var(--accent);margin:0 4px;}
+.status{font-size:11px;color:var(--muted);}
+.status.ok{color:var(--success);}
+.status.err{color:var(--error);}
+.btn-popout{background:var(--surface);border:1px solid var(--border);color:var(--accent2);padding:3px 8px;border-radius:3px;cursor:pointer;font-family:'DM Mono',monospace;font-size:9px;transition:all .15s;}
+.btn-popout:hover{background:var(--surface2);border-color:var(--accent2);}
+.popover{position:fixed;background:var(--surface);border:1px solid var(--accent);border-radius:6px;padding:9px;z-index:2147483640;box-shadow:0 4px 20px rgba(0,0,0,.7);font-size:11px;min-width:200px;}
+.popover label{font-size:9px;color:var(--muted);display:block;margin:4px 0 2px;letter-spacing:.5px;}
+.popover input[type=text],.popover select{width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:'DM Mono',monospace;font-size:11px;padding:4px 6px;border-radius:3px;}
+.popover .swatch-row{display:flex;flex-wrap:wrap;gap:4px;margin-top:3px;}
+.popover .swatch{width:18px;height:18px;border-radius:3px;cursor:pointer;border:2px solid transparent;}
+.popover .swatch:hover{border-color:#fff;}
+.popover-actions{display:flex;gap:5px;margin-top:7px;}
+.popover-actions button{flex:1;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:4px;border-radius:3px;cursor:pointer;font-family:'DM Mono',monospace;font-size:10px;}
+.popover-actions button:hover{border-color:var(--accent);color:var(--accent);}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>FDB Applet</h1>
+  <div class="sep"></div>
+  <div class="toolbar">
+    <button class="tool-btn active" id="btn-mode-vertex" onclick="setMode('vertex')">⬤ Vertex</button>
+    <button class="tool-btn" id="btn-mode-arrow" onclick="setMode('arrow')">→ Arrow</button>
+    <button class="tool-btn" id="btn-mode-select" onclick="setMode('select')">↖ Select</button>
+    <div class="sep"></div>
+    <button class="tool-btn danger" onclick="clearAll()">✕ Clear</button>
+  </div>
+  <span class="mode-pill" id="mode-label">Add Vertex</span>
+  <div class="hdr-right">
+    <div class="status" id="load-status"></div>
+    <button class="btn-run" id="btn-load" onclick="loadAlgebra()">▶ Analyse</button>
+  </div>
+</header>
+
+<div id="canvas-wrap" class="mode-vertex">
+  <svg id="qsvg" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <marker id="ah" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#d4a853"/></marker>
+      <marker id="ah2" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#7eb8a4"/></marker>
+      <marker id="ah-ar" markerWidth="7" markerHeight="5" refX="6" refY="2.5" orient="auto"><polygon points="0 0,7 2.5,0 5" fill="#4a70d4"/></marker>
+      <marker id="ah-tau" markerWidth="7" markerHeight="5" refX="6" refY="2.5" orient="auto"><polygon points="0 0,7 2.5,0 5" fill="#c96b8a"/></marker>
+    </defs>
+    <g id="ar-overlay" style="display:none"></g>
+    <g id="ar-layer"></g>
+    <path id="ghost-ar" d="" marker-end="url(#ah2)" style="display:none"/>
+    <g id="vt-layer"></g>
+  </svg>
+</div>
+
+<div class="panel-right">
+  <div class="panel-tabs">
+    <div class="tab active" onclick="showTab('build')">Build</div>
+    <div class="tab" onclick="showTab('rels')">Relations</div>
+    <div class="tab" onclick="showTab('results')">Results</div>
+  </div>
+
+  <div class="tab-content active" id="tab-build">
+    <div id="insp-empty" class="empty">
+      <b style="color:var(--accent)">⬤ Vertex</b> — click canvas to place<br>
+      <b style="color:var(--accent)">→ Arrow</b> — click source then target<br>
+      <b style="color:var(--accent)">↖ Select</b> — click to edit or drag<br><br>
+      Then click <b>▶ Analyse</b>
+    </div>
+    <div id="insp-content" style="display:none">
+      <div class="card">
+        <div class="card-title" id="insp-type">Vertex</div>
+        <div class="field"><label>Label</label><input type="text" id="insp-label" oninput="updateSel()"></div>
+        <button class="btn-del" onclick="deleteSel()">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="tab-content" id="tab-rels">
+    <div>
+      <div class="sec">Zero Relations</div>
+      <div id="mono-list"></div>
+      <button class="btn-add" onclick="addMono()">+ zero relation</button>
+      <div class="hint">Space-separated labels e.g. <em>a b</em> means ab=0</div>
+    </div>
+    <div>
+      <div class="sec">Commutativity Relations</div>
+      <div id="bi-list"></div>
+      <button class="btn-add" onclick="addBi()">+ commutativity</button>
+      <div class="hint">e.g. <em>a b</em> = <em>c d</em> means ab=cd</div>
+    </div>
+  </div>
+
+  <div class="tab-content" id="tab-results">
+    <div id="results-host">
+      <div class="empty" id="empty-results">Load the algebra first.</div>
+    </div>
+  </div>
+</div>
+
+<script>
+const API='http://localhost:8000';
+const R=22;
+let verts=[],arrows=[],mode='vertex',sel=null,arStart=null,dragging=null,dOff={x:0,y:0};
+let vId=1,aId=1,vLabel=1,aLabel='a',monoC=0,biC=0,arVisible=false;
+let rfLoaded=false;
+const svg=document.getElementById('qsvg');
+const vtL=document.getElementById('vt-layer');
+const arL=document.getElementById('ar-layer');
+const ovL=document.getElementById('ar-overlay');
+const ghost=document.getElementById('ghost-ar');
+const wrap=document.getElementById('canvas-wrap');
+
+// ── Universal palette ─────────────────────────────────────────────────────────
+const PALETTE=['#7eb8a4','#d4a853','#c96b5a','#9f8fda','#4a90d4','#e8c56a','#a0c878','#e88060','#80b8e8','#c880c8','#e85a4a','#7ed47e','#ff8fb8'];
+
+// ── Math helpers (true/false/finite/infinite styling, KaTeX rendering) ────────
+function fmtBool(v){return v?'<span class="true">true</span>':'<span class="false">false</span>';}
+function fmtFin(isFinite,label){return isFinite?`<span class="finite">${label||'finite'}</span>`:`<span class="infinite">${(label||'infinite')}</span>`;}
+function fmtInfNum(v){return v===null||v===undefined?'<span class="infinite">∞</span>':String(v);}
+function fmtMaybe(v){return v===null||v===undefined?'—':String(v);}
+// τ is rendered as a styled Unicode lowercase tau via the .tau-letter class.
+// Always returns the lowercase Greek letter τ wrapped in a span with italic font.
+function tau(){return '<span class="tau-letter">τ</span>';}
+const TAU = 'τ'; // plain Unicode, safe for HTML attributes
+function inf(){return '<span style="font-family:Georgia,serif">∞</span>';}
+function rmath(html){if(window.renderMathInElement){requestAnimationFrame(()=>renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}]}));}}
+
+// ── Quiver build/edit (Build tab) ──────────────────────────────────────────────
+function setMode(m){mode=m;arStart=null;ghost.style.display='none';deselect();
+  document.querySelectorAll('.tool-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('btn-mode-'+m).classList.add('active');
+  wrap.className='mode-'+m;
+  document.getElementById('mode-label').textContent={vertex:'Add Vertex',arrow:'Draw Arrow',select:'Select/Move'}[m];}
+wrap.addEventListener('click',e=>{if(e.target!==wrap&&e.target!==svg)return;if(mode==='vertex'){const p=pt(e);addVtx(p.x,p.y);}});
+wrap.addEventListener('mousemove',e=>{
+  if(mode==='arrow'&&arStart){const p=pt(e),v=verts.find(v=>v.id===arStart);if(v){ghost.setAttribute('d',arPath(v.x,v.y,p.x,p.y,R,0));ghost.style.display='';}}
+  if(dragging){const p=pt(e);dragging.x=p.x-dOff.x;dragging.y=p.y-dOff.y;render();}
+});
+wrap.addEventListener('mouseup',()=>{dragging=null;});
+function pt(e){const r=svg.getBoundingClientRect();return{x:e.clientX-r.left,y:e.clientY-r.top};}
+function addVtx(x,y){const id=vId++,label=String(vLabel++);verts.push({id,label,x,y});render();selItem('vertex',id);showTab('build');}
+function addAr(fid,tid){const id=aId++,label=aLabel;aLabel=String.fromCharCode(aLabel.charCodeAt(0)+1);arrows.push({id,label,from:fid,to:tid});render();selItem('arrow',id);showTab('build');}
+function delVtx(id){verts=verts.filter(v=>v.id!==id);arrows=arrows.filter(a=>a.from!==id&&a.to!==id);if(sel?.id===id)deselect();render();}
+function delAr(id){arrows=arrows.filter(a=>a.id!==id);if(sel?.id===id)deselect();render();}
+function selItem(type,id){sel={type,id};
+  const obj=type==='vertex'?verts.find(v=>v.id===id):arrows.find(a=>a.id===id);
+  document.getElementById('insp-empty').style.display='none';
+  document.getElementById('insp-content').style.display='';
+  document.getElementById('insp-type').textContent=type==='vertex'?'Vertex':'Arrow';
+  document.getElementById('insp-label').value=obj?.label||'';render();}
+function deselect(){sel=null;document.getElementById('insp-empty').style.display='';document.getElementById('insp-content').style.display='none';render();}
+function updateSel(){if(!sel)return;const v=document.getElementById('insp-label').value;
+  if(sel.type==='vertex'){const o=verts.find(x=>x.id===sel.id);if(o)o.label=v;}
+  else{const o=arrows.find(x=>x.id===sel.id);if(o)o.label=v;}render();}
+function deleteSel(){if(!sel)return;sel.type==='vertex'?delVtx(sel.id):delAr(sel.id);}
+function arPath(x1,y1,x2,y2,r,curve,isSelf=false){
+  if(isSelf){const lr=30;return `M ${x1} ${y1-r} C ${x1+lr*2} ${y1-r-lr*1.8}, ${x1+lr*2} ${y1+lr*.8}, ${x1} ${y1+r}`;}
+  const dx=x2-x1,dy=y2-y1,d=Math.sqrt(dx*dx+dy*dy);if(d<1)return'';
+  const ux=dx/d,uy=dy/d,sx=x1+ux*r,sy=y1+uy*r,ex=x2-ux*(r+3),ey=y2-uy*(r+3);
+  if(!curve)return `M ${sx} ${sy} L ${ex} ${ey}`;
+  const mx=(sx+ex)/2-uy*curve,my=(sy+ey)/2+ux*curve;
+  return `M ${sx} ${sy} Q ${mx} ${my} ${ex} ${ey}`;}
+function arLblPt(x1,y1,x2,y2,isSelf,curve){
+  if(isSelf)return{x:x1+50,y:y1-28};
+  const dx=x2-x1,dy=y2-y1,d=Math.sqrt(dx*dx+dy*dy),mx=(x1+x2)/2,my=(y1+y2)/2;
+  if(!curve)return{x:mx-(dy/d)*14,y:my+(dx/d)*14};
+  return{x:mx-(dy/d)*curve*.55,y:my+(dx/d)*curve*.55};}
+function mkEl(tag,cls){const e=document.createElementNS('http://www.w3.org/2000/svg',tag);if(cls)e.setAttribute('class',cls);return e;}
+function mkPath(d,cls){const p=mkEl('path');p.setAttribute('d',d);if(cls)p.setAttribute('class',cls);return p;}
+function mkCircle(cx,cy,r,cls){const c=mkEl('circle');c.setAttribute('cx',cx);c.setAttribute('cy',cy);c.setAttribute('r',r);if(cls)c.setAttribute('class',cls);return c;}
+function mkText(x,y,txt,cls){const t=mkEl('text');t.setAttribute('x',x);t.setAttribute('y',y);if(cls)t.setAttribute('class',cls);t.textContent=txt;return t;}
+
+function render(){
+  arL.innerHTML='';
+  const fwdCount={};
+  arrows.forEach(a=>{ const k=`${a.from}_${a.to}`; fwdCount[k]=(fwdCount[k]||0)+1; });
+  const pairIdx={};
+  arrows.forEach(a=>{
+    const v1=verts.find(v=>v.id===a.from),v2=verts.find(v=>v.id===a.to);if(!v1||!v2)return;
+    const self=a.from===a.to;
+    const dk=`${a.from}_${a.to}`,revK=`${a.to}_${a.from}`;
+    const total=fwdCount[dk]||1;
+    const hasRev=!self&&(fwdCount[revK]||0)>0;
+    pairIdx[dk]=(pairIdx[dk]||0);
+    const idx=pairIdx[dk]++;
+    const spread=total>1?(idx-(total-1)/2)*24:0;
+    const dirOffset=hasRev?30:0;
+    const curve=self?0:spread+dirOffset;
+    const d=arPath(v1.x,v1.y,v2.x,v2.y,R,curve,self),lp=arLblPt(v1.x,v1.y,v2.x,v2.y,self,curve);
+    const isSel=sel?.type==='arrow'&&sel.id===a.id;
+    const g=mkEl('g','ar-g'+(isSel?' sel':''));
+    const hit=mkPath(d);hit.setAttribute('stroke','transparent');hit.setAttribute('stroke-width','14');hit.setAttribute('fill','none');
+    const path=mkPath(d,'ar-path'),lbl=mkText(lp.x,lp.y,a.label,'ar-label');
+    g.append(hit,path,lbl);
+    g.addEventListener('click',e=>{e.stopPropagation();if(mode!=='arrow'){selItem('arrow',a.id);showTab('build');}});
+    arL.appendChild(g);
+  });
+  vtL.innerHTML='';
+  verts.forEach(v=>{
+    const isSel=sel?.type==='vertex'&&sel.id===v.id;
+    const g=mkEl('g','vtx-g'+(isSel?' sel':''));
+    const c=mkCircle(v.x,v.y,R,'vtx-circle'),t=mkText(v.x,v.y,v.label,'vtx-label');
+    g.append(c,t);
+    g.addEventListener('click',e=>{e.stopPropagation();
+      if(mode==='arrow'){if(!arStart){arStart=v.id;}else{addAr(arStart,v.id);arStart=null;ghost.style.display='none';render();}}
+      else{selItem('vertex',v.id);showTab('build');}});
+    g.addEventListener('mousedown',e=>{if(mode==='select'){e.stopPropagation();const p=pt(e);dragging=v;dOff={x:p.x-v.x,y:p.y-v.y};}});
+    vtL.appendChild(g);
+  });
+}
+function clearAll(){if(!confirm('Clear all?'))return;
+  verts=[];arrows=[];vId=1;aId=1;vLabel=1;aLabel='a';sel=null;arStart=null;
+  document.getElementById('insp-empty').style.display='';
+  document.getElementById('insp-content').style.display='none';
+  document.getElementById('mono-list').innerHTML='';
+  document.getElementById('bi-list').innerHTML='';
+  ovL.innerHTML='';ovL.style.display='none';arVisible=false;
+  rfLoaded=false;
+  // Reset all previously-clicked tiles to their original (non-green) appearance.
+  _clickedTiles.clear();
+  render();setStatus('','');
+  showResultsGrid();}
+function addMono(v=''){monoC++;const id=monoC;const r=document.createElement('div');r.className='rel-row';r.id='mono-'+id;r.innerHTML=`<input type="text" placeholder="a b (ab=0)" value="${v}"><button class="btn-icon" onclick="document.getElementById('mono-${id}').remove()">×</button>`;document.getElementById('mono-list').appendChild(r);}
+function addBi(l='',rr=''){biC++;const id=biC;const row=document.createElement('div');row.className='rel-row';row.id='bi-'+id;row.innerHTML=`<input type="text" placeholder="a b" value="${l}" style="flex:1"><span class="eq">=</span><input type="text" placeholder="c d" value="${rr}" style="flex:1"><button class="btn-icon" onclick="document.getElementById('bi-${id}').remove()">×</button>`;document.getElementById('bi-list').appendChild(row);}
+function getMonos(){return Array.from(document.querySelectorAll('#mono-list .rel-row input')).map(i=>i.value.trim().split(/\s+/).filter(Boolean)).filter(r=>r.length>=2);}
+function getBis(){return Array.from(document.querySelectorAll('#bi-list .rel-row')).map(r=>{const ins=r.querySelectorAll('input');return{first:ins[0].value.trim().split(/\s+/).filter(Boolean),second:ins[1].value.trim().split(/\s+/).filter(Boolean)};}).filter(r=>r.first.length>=2&&r.second.length>=2);}
+
+async function loadAlgebra(){
+  if(!verts.length){setStatus('err','No vertices.');return;}
+  const body={quiver:{vertices:verts.map(v=>v.label),arrows:arrows.map(a=>({label:a.label,from:verts.find(v=>v.id===a.from)?.label,to:verts.find(v=>v.id===a.to)?.label}))},monoRelations:getMonos(),biRelations:getBis()};
+  document.getElementById('btn-load').disabled=true;setStatus('','⏳ Loading…');
+  try{const res=await fetch(API+'/algebra',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    const d=await res.json();if(!res.ok)throw new Error(d.detail||JSON.stringify(d));
+    rfLoaded=true;setStatus('ok','✓ '+d.loaded);showTab('results');showResultsGrid();
+  }catch(e){setStatus('err','✗ '+e.message);}
+  finally{document.getElementById('btn-load').disabled=false;}
+}
+
+function showTab(name){const names=['build','rels','results'];
+  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',names[i]===name));
+  document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');}
+function setStatus(type,msg){const el=document.getElementById('load-status');el.textContent=msg;el.className='status'+(type?' '+type:'');}
+async function api(path){try{const res=await fetch(API+path);const d=await res.json();
+  if(!res.ok){tileSetBody(`<div class="empty" style="color:var(--error)">Error: ${d.detail||JSON.stringify(d)}</div>`);return null;}return d;}
+  catch(e){tileSetBody(`<div class="empty" style="color:var(--error)">Cannot connect to server on port 8000.<br>Is it running?</div>`);return null;}}
+
+// ── 9-tile RESULTS grid ──────────────────────────────────────────────────────
+const TILES=[
+  ['Information',                           'A_{11}', 'tileInformation'],
+  ['Indecomposables<br>&amp; bands',         'A_{12}', 'tileIndecBands'],
+  ['Hom &amp; Ext tables',                   'A_{13}', 'tileHomExt'],
+  ['Cycles &amp; Directedness',              'A_{21}', 'tileCycles'],
+  ['Modules &amp; Reps',                     'A_{22}', 'tileModulesReps'],
+  ['Splitting classes',                      'A_{23}', 'tileSplitting'],
+  [`${tau()}-Phenomena`,                     'A_{31}', 'tileTauPheno'],
+  ['Lattices &amp; Quivers',                 'A_{32}', 'tileLatticesQuivers'],
+  ['Generalized Barbell',                    'A_{33}', 'tileBarbell'],
+  ['Fringed Algebra',                        'A_{41}', 'tileFringedAlgebra']
+];
+
+let _clickedTiles=new Set();
+
+function showResultsGrid(){
+  const host=document.getElementById('results-host');
+  if(!rfLoaded){host.innerHTML='<div class="empty">Load the algebra first.</div>';return;}
+  const cells=TILES.map(([title,addr,fn],i)=>{
+    const cls='tile'+(_clickedTiles.has(addr)?' clicked':'');
+    return `<div class="${cls}" data-addr="${addr}" onclick="onTileClick('${addr}','${fn}','${title.replace(/"/g,'&quot;')}')" title="${addr}">${title}</div>`;
+  }).join('');
+  host.innerHTML=`<div class="tile-grid">${cells}</div>`;
+}
+function onTileClick(addr,fn,title){
+  _clickedTiles.add(addr);
+  const host=document.getElementById('results-host');
+  host.innerHTML=`
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+      <button class="tile-back" onclick="showResultsGrid()">← Tiles</button>
+      <span class="tile-title">${title}</span>
+      <span style="margin-left:auto;font-size:9px;color:var(--muted)">${addr}</span>
+    </div>
+    <div id="tile-host" class="tile-view"></div>`;
+  if(window[fn]) window[fn]();
+}
+function tileSetBody(html){const el=document.getElementById('tile-host');if(el)el.innerHTML=html;}
+function tileAppend(html){const el=document.getElementById('tile-host');if(el)el.insertAdjacentHTML('beforeend',html);}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Universal toolkit: pop-out window, vertex/edge editing, table colorize
+// ─────────────────────────────────────────────────────────────────────────────
+let _winZ=10000;
+function popoutWindow(opts){
+  // opts: {title, render(container, {scale,setScale}), w, h}
+  const id='popout-'+Date.now();
+  const win=document.createElement('div');
+  win.id=id;
+  win.style.cssText=`position:fixed;top:60px;left:50px;width:${opts.w||640}px;height:${opts.h||500}px;min-width:280px;min-height:240px;background:#0f0e0c;border:1px solid #4a4540;border-radius:8px;box-shadow:0 8px 40px rgba(0,0,0,.7);display:flex;flex-direction:column;z-index:${_winZ++};resize:both;overflow:hidden;`;
+  const bar=document.createElement('div');
+  bar.style.cssText=`background:#1a1916;border-bottom:1px solid #2e2c29;padding:8px 12px;display:flex;align-items:center;gap:10px;cursor:move;flex-shrink:0;user-select:none;`;
+  bar.innerHTML=`<span style="font-family:Fraunces,serif;font-size:14px;color:#d4a853">${opts.title||'View'}</span>
+    <div style="margin-left:auto;display:flex;gap:6px;align-items:center">
+      <button class="zoom-btn" data-act="zoom-out" title="Zoom out">−</button>
+      <button class="zoom-btn" data-act="zoom-in"  title="Zoom in">+</button>
+      <button class="btn-icon" data-act="zoom-reset" title="Reset zoom">⟳</button>
+      <button class="btn-icon" data-act="bg" title="Change background">🎨</button>
+      <button class="btn-icon" data-act="close" title="Close">✕</button>
+    </div>`;
+  win.appendChild(bar);
+  const body=document.createElement('div');
+  body.style.cssText='flex:1;overflow:auto;position:relative;background:#0f0e0c;';
+  win.appendChild(body);
+  document.body.appendChild(win);
+  let scale=1;
+  function setScale(v){scale=Math.max(.25,Math.min(4,v));render();}
+  function render(){body.innerHTML='';const wrap=document.createElement('div');wrap.style.cssText=`transform-origin:top left;transform:scale(${scale});display:inline-block;min-width:100%;`;body.appendChild(wrap);opts.render(wrap,{scale,setScale,window:win});}
+  bar.querySelector('[data-act=close]').onclick=()=>win.remove();
+  bar.querySelector('[data-act=zoom-in]').onclick=()=>setScale(scale*1.2);
+  bar.querySelector('[data-act=zoom-out]').onclick=()=>setScale(scale/1.2);
+  bar.querySelector('[data-act=zoom-reset]').onclick=()=>setScale(1);
+  bar.querySelector('[data-act=bg]').onclick=(e)=>{
+    e.stopPropagation();
+    showColorPicker(e.clientX,e.clientY,(c)=>{body.style.background=c||'#0f0e0c';},true);
+  };
+  // Drag
+  let drag=false,ox=0,oy=0;
+  bar.addEventListener('mousedown',e=>{
+    if(e.target.closest('button'))return;
+    drag=true;ox=e.clientX-win.offsetLeft;oy=e.clientY-win.offsetTop;e.preventDefault();
+  });
+  document.addEventListener('mousemove',e=>{if(!drag)return;win.style.left=Math.max(0,e.clientX-ox)+'px';win.style.top=Math.max(0,e.clientY-oy)+'px';});
+  document.addEventListener('mouseup',()=>{drag=false;});
+  render();
+  return win;
+}
+
+function showColorPicker(x,y,onPick,withReset){
+  const old=document.getElementById('global-cp');if(old)old.remove();
+  const pk=document.createElement('div');pk.id='global-cp';
+  pk.style.cssText=`position:fixed;left:${Math.min(x,window.innerWidth-180)}px;top:${Math.min(y,window.innerHeight-160)}px;background:#1a1916;border:1px solid #4a4540;border-radius:6px;padding:9px;z-index:2147483645;box-shadow:0 4px 20px rgba(0,0,0,.7);font-family:'DM Mono',monospace;font-size:10px;`;
+  pk.innerHTML=`<div style="font-size:9px;color:#6a6560;margin-bottom:6px;letter-spacing:1px">PICK COLOUR</div><div style="display:flex;flex-wrap:wrap;gap:4px;width:160px">`+
+    PALETTE.map(c=>`<div data-col="${c}" style="width:22px;height:22px;background:${c};border-radius:3px;cursor:pointer;border:2px solid transparent"></div>`).join('')+
+    (withReset?`<div data-col="" style="width:54px;height:22px;background:#2e2c29;border-radius:3px;cursor:pointer;font-size:9px;color:#a0a0a0;display:flex;align-items:center;justify-content:center">reset</div>`:'')+
+    `</div>`;
+  document.body.appendChild(pk);
+  pk.querySelectorAll('[data-col]').forEach(d=>{
+    d.addEventListener('mouseover',()=>{d.style.borderColor='#fff';});
+    d.addEventListener('mouseout',()=>{d.style.borderColor='transparent';});
+    d.addEventListener('click',()=>{onPick(d.getAttribute('data-col')||null);pk.remove();});
+  });
+  setTimeout(()=>{
+    const f=ev=>{if(!pk.contains(ev.target)){pk.remove();document.removeEventListener('click',f,true);}};
+    document.addEventListener('click',f,true);
+  },50);
+}
+
+// Vertex/edge editing popover for any SVG element.
+// Signature: svgEditPopover(eventOrX, target, onChange, headerInfo) — first
+// argument may be either a MouseEvent or an x-coordinate (back-compat). The
+// popover is anchored at the BOTTOM of the parent pop-out window (or the
+// bottom of the viewport otherwise) and is fully draggable by its header.
+// `headerInfo` is an optional rich-HTML string shown in the header.
+function svgEditPopover(arg0,target,onChange,headerInfo){
+  const old=document.getElementById('svg-edit-pop');if(old)old.remove();
+  const pop=document.createElement('div');pop.id='svg-edit-pop';pop.className='popover';
+  // Resolve event vs (x,y).
+  let evt=null,clickX=null,clickY=null;
+  if(arg0&&typeof arg0==='object'&&'clientX' in arg0){
+    evt=arg0;clickX=arg0.clientX;clickY=arg0.clientY;
+  } else if(typeof arg0==='number'){
+    clickX=arg0;clickY=arguments[1];target=arguments[2];onChange=arguments[3];headerInfo=arguments[4];
+  }
+  // Find the nearest pop-out window (if any) to anchor the popover bottom.
+  // The popover is placed AT THE BOTTOM of the parent window (overlaying the
+  // bottom strip), so it doesn't cover the diagram/table area. If there's no
+  // parent window, anchor at the bottom of the viewport.
+  let parentWin=null;
+  if(evt&&evt.target){parentWin=evt.target.closest('[id^="popout-"]');}
+  const POP_H = 290;  // approximate popover height
+  let left,top;
+  if(parentWin){
+    const r=parentWin.getBoundingClientRect();
+    left=Math.max(10, r.left + 10);
+    // Anchor at the bottom of the window: top = bottom - height (clamped)
+    top = Math.max(r.top + 30, r.bottom - POP_H - 8);
+  } else {
+    // Anchor at the bottom of the viewport
+    left = clickX !== null
+      ? Math.max(20, Math.min(clickX - 130, window.innerWidth - 280))
+      : 20;
+    top = Math.max(20, window.innerHeight - POP_H - 16);
+  }
+  pop.style.left=left+'px';
+  pop.style.top =top+'px';
+  pop.style.minWidth='240px';
+  const titleHtml=headerInfo
+    ? `<span>${headerInfo}</span>`
+    : `<span>Edit ${target.type}</span>`;
+  pop.innerHTML=`
+    <div class="popover-header">
+      ${titleHtml}<span class="pop-close" title="Close">✕</span>
+    </div>
+    <label>Name / label</label>
+    <input type="text" data-k="name" value="${(target.name||'').replace(/"/g,'&quot;')}">
+    <label>Colour</label>
+    <div class="swatch-row">${PALETTE.map(c=>`<div class="swatch" style="background:${c}" data-col="${c}"></div>`).join('')}<div class="swatch" style="background:#2e2c29;color:#a0a0a0;font-size:8px;display:flex;align-items:center;justify-content:center;width:46px" data-col="">reset</div></div>
+    ${target.type==='edge'?`
+    <label>Thickness</label>
+    <input type="text" data-k="thickness" value="${target.thickness||2}">
+    <label>Line style</label>
+    <select data-k="style">
+      <option value="solid" ${target.style==='solid'?'selected':''}>solid</option>
+      <option value="dotted" ${target.style==='dotted'?'selected':''}>dotted</option>
+      <option value="dashed" ${target.style==='dashed'?'selected':''}>dashed</option>
+    </select>`:''}
+    <div class="popover-actions">
+      <button data-act="apply">Apply</button>
+      <button data-act="cancel">Cancel</button>
+    </div>`;
+  document.body.appendChild(pop);
+  let chosenCol=target.color||null;
+  pop.querySelectorAll('.swatch').forEach(d=>{
+    d.addEventListener('click',()=>{chosenCol=d.getAttribute('data-col')||null;pop.querySelectorAll('.swatch').forEach(s=>s.style.outline='');d.style.outline='2px solid #fff';});
+  });
+  pop.querySelector('[data-act=apply]').addEventListener('click',()=>{
+    const out={...target};
+    out.name=pop.querySelector('[data-k=name]').value;
+    out.color=chosenCol;
+    if(target.type==='edge'){
+      out.thickness=parseFloat(pop.querySelector('[data-k=thickness]').value)||2;
+      out.style=pop.querySelector('[data-k=style]').value;
+    }
+    onChange(out);pop.remove();
+  });
+  pop.querySelector('[data-act=cancel]').addEventListener('click',()=>pop.remove());
+  pop.querySelector('.pop-close').addEventListener('click',()=>pop.remove());
+  // Make popover draggable by its header.
+  const hdr=pop.querySelector('.popover-header');
+  let drag=false,ox=0,oy=0;
+  hdr.addEventListener('mousedown',e=>{
+    if(e.target.classList.contains('pop-close'))return;
+    drag=true;
+    const r=pop.getBoundingClientRect();
+    ox=e.clientX-r.left; oy=e.clientY-r.top;
+    e.preventDefault();
+  });
+  document.addEventListener('mousemove',e=>{
+    if(!drag)return;
+    pop.style.left=Math.max(0,Math.min(window.innerWidth-pop.offsetWidth,e.clientX-ox))+'px';
+    pop.style.top =Math.max(0,Math.min(window.innerHeight-pop.offsetHeight,e.clientY-oy))+'px';
+  });
+  document.addEventListener('mouseup',()=>{drag=false;});
+}
+
+// Table column/row colorize toolkit. Adds context menu to th cells (col color)
+// and to the first cell of each tr (row color).
+function attachTableColorize(table){
+  if(!table)return;
+  // Column headers
+  const ths=table.querySelectorAll('thead th');
+  ths.forEach((th,colIdx)=>{
+    th.style.cursor='context-menu';
+    th.title='Right-click: colour this column';
+    th.addEventListener('contextmenu',e=>{
+      e.preventDefault();
+      showColorPicker(e.clientX,e.clientY,(c)=>{
+        const tbl=th.closest('table');
+        tbl.querySelectorAll('tbody tr').forEach(tr=>{
+          const cell=tr.children[colIdx];if(cell)cell.style.background=c||'';
+        });
+        th.style.background=c||'';
+      },true);
+    });
+  });
+  // Row index = first cell each row → right click colors row
+  const trs=table.querySelectorAll('tbody tr');
+  trs.forEach(tr=>{
+    tr.style.cursor='context-menu';
+    tr.title='Right-click on first cell: colour this row';
+    const first=tr.children[0];
+    if(!first)return;
+    first.addEventListener('contextmenu',e=>{
+      e.preventDefault();
+      showColorPicker(e.clientX,e.clientY,(c)=>{
+        Array.from(tr.children).forEach(td=>{td.style.background=c||'';});
+      },true);
+    });
+  });
+}
+
+// Add an Open-in-New-Window button to a result block
+function popoutBtn(label,onClick){
+  return `<button class="btn-popout" onclick="(${onClick.toString()})()">⊞ ${label||'Open in window'}</button>`;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Generic SVG renderer used by many tile views.
+// drawGenericGraph(host, {nodes:[{id,label}], edges:[{from,to,label?}], directed:true/false, layout:'circle'|'grid', popoutTitle, popoutInner})
+// Returns svg, supports node drag, vertex/edge edit popover.
+// ─────────────────────────────────────────────────────────────────────────────
+function drawGenericGraph(host, data, opts={}){
+  host.innerHTML='';
+  const W=opts.W|| (host.clientWidth||440);
+  const H=opts.H|| (host.clientHeight||340);
+  const directed=opts.directed!==false;
+  const NS='http://www.w3.org/2000/svg';
+  const svg=document.createElementNS(NS,'svg');
+  svg.setAttribute('width',W);svg.setAttribute('height',H);
+  svg.style.cssText='display:block;background:transparent;';
+  host.appendChild(svg);
+  // Defs (markers per palette + default)
+  const defs=document.createElementNS(NS,'defs');
+  const allCols=['#4a90d4',...PALETTE];
+  [...new Set(allCols)].forEach(col=>{
+    const id='mk-'+col.replace('#','');
+    const m=document.createElementNS(NS,'marker');
+    m.setAttribute('id',id);m.setAttribute('markerWidth','9');m.setAttribute('markerHeight','7');m.setAttribute('refX','8');m.setAttribute('refY','3.5');m.setAttribute('orient','auto');
+    const p=document.createElementNS(NS,'polygon');p.setAttribute('points','0 0,9 3.5,0 7');p.setAttribute('fill',col);
+    m.appendChild(p);defs.appendChild(m);
+  });
+  svg.appendChild(defs);
+  const edgeG=document.createElementNS(NS,'g');svg.appendChild(edgeG);
+  const nodeG=document.createElementNS(NS,'g');svg.appendChild(nodeG);
+  const NR=opts.NR||20;
+  const pos={};const n=data.nodes.length;
+  // Layout
+  if(opts.positions){
+    Object.assign(pos,opts.positions);
+  } else {
+    data.nodes.forEach((nd,i)=>{
+      const a=(2*Math.PI*i/Math.max(n,1))-Math.PI/2;
+      const rx=W/2-NR-25,ry=H/2-NR-25;
+      pos[nd.id]={x:W/2+Math.cos(a)*rx,y:H/2+Math.sin(a)*ry};
+    });
+  }
+  const nodeAttr={};data.nodes.forEach(nd=>{nodeAttr[nd.id]={color:nd.color||opts.nodeColor||'#4a90d4',label:nd.label||nd.id,thickness:2};});
+  const edgeAttr={};data.edges.forEach((e,i)=>{edgeAttr[i]={color:e.color||opts.edgeColor||'#7eb8a4',thickness:e.thickness||1.8,style:e.style||'solid',label:e.label||''};});
+  let dragId=null,startPt={x:0,y:0},startNode={x:0,y:0},didDrag=false;
+  function ptFrom(e){const ctm=svg.getScreenCTM();return{x:(e.clientX-ctm.e)/ctm.a,y:(e.clientY-ctm.f)/ctm.d};}
+  svg.addEventListener('mousemove',ev=>{
+    if(dragId===null)return;
+    const p=ptFrom(ev);
+    pos[dragId].x=Math.max(NR,Math.min(W-NR,startNode.x+(p.x-startPt.x)));
+    pos[dragId].y=Math.max(NR,Math.min(H-NR,startNode.y+(p.y-startPt.y)));
+    if(Math.abs(p.x-startPt.x)+Math.abs(p.y-startPt.y)>3) didDrag=true;
+    redraw();
+  });
+  svg.addEventListener('mouseup',()=>{dragId=null;svg.style.cursor='';});
+  svg.addEventListener('mouseleave',()=>{dragId=null;});
+  function dasharray(style,t){if(style==='dotted')return `${t},${t*1.5}`;if(style==='dashed')return `${t*3},${t*2}`;return 'none';}
+  // Pre-compute parallel-edge offsets so multiple arrows between the same
+  // ordered pair of vertices are drawn distinguishably as curved arcs.
+  const pairKey=(f,t)=>String(f)+'>>>'+String(t);
+  const fwdCount={},revExists={};
+  data.edges.forEach(e=>{const k=pairKey(e.from,e.to);fwdCount[k]=(fwdCount[k]||0)+1;});
+  data.edges.forEach(e=>{const r=pairKey(e.to,e.from);if(fwdCount[r])revExists[pairKey(e.from,e.to)]=true;});
+  function redraw(){
+    edgeG.innerHTML='';nodeG.innerHTML='';
+    const seenIdx={};  // running index of edges drawn for each pair
+    data.edges.forEach((e,i)=>{
+      const p1=pos[e.from],p2=pos[e.to];if(!p1||!p2)return;
+      const dx=p2.x-p1.x,dy=p2.y-p1.y,d=Math.sqrt(dx*dx+dy*dy);if(d<1)return;
+      const ux=dx/d,uy=dy/d;
+      const sx=p1.x+ux*NR,sy=p1.y+uy*NR;
+      const ex=p2.x-ux*(NR+5),ey=p2.y-uy*(NR+5);
+      const attr=edgeAttr[i];
+      // Curve when there are >=2 forward arrows or a reverse arrow exists.
+      const k=pairKey(e.from,e.to);
+      const total=fwdCount[k]||1;
+      seenIdx[k]=(seenIdx[k]||0);
+      const idx=seenIdx[k]++;
+      let curve=0;
+      if(total>1){curve=(idx-(total-1)/2)*22;}
+      if(revExists[k]){curve+=24;}    // push to one side so opposite arrow is on the other
+      const path=document.createElementNS(NS,'path');
+      let pathD;
+      if(Math.abs(curve)<1){
+        pathD=`M ${sx} ${sy} L ${ex} ${ey}`;
+      } else {
+        const mx=(sx+ex)/2-uy*curve, my=(sy+ey)/2+ux*curve;
+        pathD=`M ${sx} ${sy} Q ${mx} ${my} ${ex} ${ey}`;
+      }
+      path.setAttribute('d',pathD);
+      path.setAttribute('stroke',attr.color);
+      path.setAttribute('stroke-width',attr.thickness);
+      path.setAttribute('fill','none');
+      path.setAttribute('stroke-dasharray',dasharray(attr.style,attr.thickness));
+      if(directed) path.setAttribute('marker-end',`url(#mk-${attr.color.replace('#','')})`);
+      path.style.cursor='pointer';
+      path.addEventListener('click',ev=>{
+        ev.stopPropagation();
+        // Header text — for an arrow X→Y in a hom-quiver we have e.headerInfo
+        const headerInfo = e.headerInfo
+          || (e.from && e.to ? 'Edge: '+e.from+' → '+e.to : null);
+        svgEditPopover(ev,{type:'edge',name:attr.label,color:attr.color,thickness:attr.thickness,style:attr.style},(out)=>{
+          attr.label=out.name;if(out.color)attr.color=out.color;attr.thickness=out.thickness;attr.style=out.style;redraw();
+        }, headerInfo);
+      });
+      edgeG.appendChild(path);
+      if(attr.label){
+        const mx=Math.abs(curve)<1?(sx+ex)/2-uy*14:(sx+ex)/2-uy*(curve*0.5+8);
+        const my=Math.abs(curve)<1?(sy+ey)/2+ux*14:(sy+ey)/2+ux*(curve*0.5+8);
+        const t=document.createElementNS(NS,'text');
+        t.setAttribute('x',mx);t.setAttribute('y',my);t.setAttribute('text-anchor','middle');t.setAttribute('dominant-baseline','central');
+        t.setAttribute('style',`fill:${attr.color};font-size:11px;font-family:DM Mono,monospace`);
+        t.textContent=attr.label;edgeG.appendChild(t);
+      }
+    });
+    data.nodes.forEach(nd=>{
+      const p=pos[nd.id];if(!p)return;
+      const a=nodeAttr[nd.id];
+      const g=document.createElementNS(NS,'g');g.style.cursor='grab';
+      const c=document.createElementNS(NS,'circle');
+      c.setAttribute('cx',p.x);c.setAttribute('cy',p.y);c.setAttribute('r',NR);
+      c.setAttribute('fill',a.color+'22');c.setAttribute('stroke',a.color);c.setAttribute('stroke-width','2.4');
+      const t=document.createElementNS(NS,'text');
+      t.setAttribute('x',p.x);t.setAttribute('y',p.y);t.setAttribute('text-anchor','middle');t.setAttribute('dominant-baseline','central');
+      t.setAttribute('style','fill:#e8e4dc;font-size:10px;font-family:DM Mono,monospace;font-weight:500;pointer-events:none');
+      const lbl=a.label.length>9?a.label.slice(0,8)+'…':a.label;
+      t.textContent=lbl;
+      const title=document.createElementNS(NS,'title');title.textContent=nd.label||nd.id;
+      g.append(title,c,t);
+      g.addEventListener('mousedown',ev=>{ev.stopPropagation();ev.preventDefault();dragId=nd.id;startPt=ptFrom(ev);startNode={x:p.x,y:p.y};didDrag=false;svg.style.cursor='grabbing';});
+      g.addEventListener('mouseup',ev=>{
+        if(!didDrag){
+          // Header info — for lattice/wide nodes this contains the full content list.
+          const headerInfo = nd.headerInfo
+            || (Array.isArray(nd.content) && nd.content.length
+                ? 'Vertex: {'+nd.content.join(', ')+'}'
+                : nd.label?'Vertex: '+nd.label : null);
+          svgEditPopover(ev,{type:'vertex',name:a.label,color:a.color},(out)=>{
+            a.label=out.name||a.label;if(out.color)a.color=out.color;redraw();
+          }, headerInfo);
+        }
+        dragId=null;
+      });
+      nodeG.appendChild(g);
+    });
+  }
+  redraw();
+  return {svg,redraw,pos,nodeAttr,edgeAttr};
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Tile A_{11} — Information
+// ═══════════════════════════════════════════════════════════════════════════
+async function tileInformation(){
+  tileSetBody('<div class="empty">Loading…</div>');
+  const d=await api('/rf/info-bundle');if(!d)return;
+  const RF=d.is_rep_finite, BF=d.is_brick_finite;
+  const fmtRF=v=>(v===null||v===undefined)?'<span class="infinite">∞</span>':String(v);
+  const empty='<span style="color:var(--muted)">—</span>';
+  const repTypeLabel=RF
+    ? '<span class="finite">representation finite</span>'
+    : '<span class="infinite">representation infinite</span>';
+  const brickType=BF
+    ? '<span class="finite">brick finite</span>'
+    : '<span class="infinite">brick infinite</span>';
+  const tauTilt=BF
+    ? '<span class="finite">'+tau()+'-tilting finite</span>'
+    : '<span class="infinite">'+tau()+'-tilting infinite</span>';
+  const rows=[
+    ['Rank',                          d.rank],
+    ['Vertices',                       d.vertices.length],
+    ['Arrows',                         d.num_arrows],
+    ['Dimension',                      d.dimension??'—'],
+    ['Rep-type',                       repTypeLabel],
+    ['String',                         fmtBool(d.is_string)],
+    ['Gentle',                         fmtBool(d.is_gentle)],
+    ['# indecomp.',                    RF?d.num_indecs:'<span class="infinite">∞</span>'],
+    ['Brick-type',                     brickType],
+    ['# bricks',                       BF?d.num_bricks:'<span class="infinite">∞</span>'],
+    [tau()+'-tilting type',            tauTilt],
+    ['# ind '+tau()+'-rigids',         BF?d.num_indec_tau_rigids:'<span class="infinite">∞</span>'],
+    ['# ind rigids',                   RF?d.num_indec_rigids:empty],
+    ['# Torsion classes',              BF?d.num_torsion_classes:'<span class="infinite">∞</span>'],
+    ['# Wide subcategories',           BF?d.num_wide_subcats:'<span class="infinite">∞</span>'],
+    ['# Semibricks',                   BF?d.num_semibricks:'<span class="infinite">∞</span>'],
+    ['max dim End$_A$(X)',             RF?d.max_dim_end:empty],
+    ['max dim Ext$^1_A$(X)',           RF?d.max_dim_self_ext1:empty],
+    ['max dim Hom$_A$(X,'+tau()+'X)',  BF?d.max_dim_hom_x_taux:empty],
+    ['max dim Hom$_A$(X,Y)',           RF?d.max_dim_hom:empty],
+    ['max dim Ext$^1_A$(X,Y)',         RF?d.max_dim_ext1:empty],
+    ['max dim Hom$_A$(X,'+tau()+'Y)',  RF?d.max_dim_hom_tau:empty],
+    ['# short cycles',                 RF?d.num_short_cycles:'<span class="infinite">∞</span>'],
+    ['size of longest cycle',          RF?(d.longest_cycle_length||empty):empty],
+    ['# brick cycles',                 BF?d.num_brick_cycles:empty],
+  ];
+  const html=`<div class="rblock"><div class="rhead">Information<button class="btn-popout" onclick="popoutInformation()">⊞ Open in window</button></div>
+    <div class="rbody"><table class="tbl" id="info-table"><thead><tr><th>Property</th><th>Value</th></tr></thead>
+    <tbody>${rows.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td></tr>`).join('')}</tbody></table></div></div>`;
+  tileSetBody(html);
+  attachTableColorize(document.getElementById('info-table'));
+  rmath();
+  // Save snapshot for popout
+  window._infoRows=rows;
+}
+function popoutInformation(){
+  const rows=window._infoRows||[];
+  popoutWindow({title:'Information',w:560,h:560,render:(c)=>{
+    c.style.padding='14px';
+    c.innerHTML=`<table class="tbl" id="info-table-pop"><thead><tr><th>Property</th><th>Value</th></tr></thead><tbody>${rows.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td></tr>`).join('')}</tbody></table>`;
+    attachTableColorize(c.querySelector('table'));
+    rmath();
+  }});
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Tile A_{12} — Indecomposables & bands
+// ═══════════════════════════════════════════════════════════════════════════
+async function tileIndecBands(){
+  tileSetBody('<div class="empty">Loading…</div>');
+  const ind=await api('/rf/indec-extended');if(!ind)return;
+  const bands=await api('/modules/bands').catch(()=>[]);
+  const rows=ind.map(m=>{
+    const tag=(m.is_projective&&m.is_injective)?'<span class="tag tp">P</span><span class="tag ti">I</span>':m.is_projective?'<span class="tag tp">P</span>':m.is_injective?'<span class="tag ti">I</span>':'';
+    const pd=m.proj_dim===null?'∞':(m.proj_dim??'—');
+    const id=m.inj_dim===null?'∞':(m.inj_dim??'—');
+    return `<tr>
+      <td>${m.name}${tag}</td><td>${m.dim}</td>
+      <td>${(m.top||[]).join(',')||'—'}</td><td>${(m.socle||[]).join(',')||'—'}</td>
+      <td>${pd}</td><td>${id}</td>
+      <td>${m.is_brick?'<span class="true">true</span>':'<span class="false">false</span>'}</td>
+      <td>${m.tau_translate||'—'}</td>
+      <td>${m.is_i_tau_rigid?'<span class="true">true</span>':'<span class="false">false</span>'}</td>
+      <td>${m.is_i_rigid?'<span class="true">true</span>':'<span class="false">false</span>'}</td>
+    </tr>`;
+  }).join('');
+  let bandHtml='';
+  if(Array.isArray(bands)&&bands.length){
+    bandHtml=`<div class="rblock" style="margin-top:10px"><div class="rhead">Primitive bands</div>
+      <div class="rbody"><div class="pill-row">${bands.map(b=>`<span class="pill">${b.name} <span style="color:var(--muted);font-size:10px">(len ${b.length})</span></span>`).join('')}</div></div></div>`;
+  } else {
+    bandHtml='<div class="rblock" style="margin-top:10px"><div class="rhead">Primitive bands</div><div class="rbody"><div class="empty" style="padding:12px">No bands (algebra is rep-finite or has no bands).</div></div></div>';
+  }
+  const html=`<div class="rblock"><div class="rhead">Indecomposables (${ind.length})<button class="btn-popout" onclick="popoutIndec()">⊞ Open in window</button></div>
+    <div class="rbody"><div class="scroll-x"><table class="tbl" id="indec-table">
+    <thead><tr><th>Module</th><th>dim</th><th>top</th><th>socle</th><th>pd</th><th>id</th><th>brick</th><th>${tau()}-translate</th><th>i${tau()}-rigid</th><th>i-rigid</th></tr></thead>
+    <tbody>${rows}</tbody></table></div></div></div>`+bandHtml;
+  tileSetBody(html);
+  attachTableColorize(document.getElementById('indec-table'));
+  window._indecData=ind;
+}
+function popoutIndec(){
+  const ind=window._indecData||[];
+  popoutWindow({title:'Indecomposables',w:780,h:560,render:c=>{
+    c.style.padding='14px';
+    const rows=ind.map(m=>`<tr><td>${m.name}</td><td>${m.dim}</td><td>${(m.top||[]).join(',')||'—'}</td><td>${(m.socle||[]).join(',')||'—'}</td><td>${m.proj_dim===null?'∞':m.proj_dim??'—'}</td><td>${m.inj_dim===null?'∞':m.inj_dim??'—'}</td><td>${m.is_brick?'<span class="true">true</span>':'<span class="false">false</span>'}</td><td>${m.tau_translate||'—'}</td><td>${m.is_i_tau_rigid?'<span class="true">true</span>':'<span class="false">false</span>'}</td><td>${m.is_i_rigid?'<span class="true">true</span>':'<span class="false">false</span>'}</td></tr>`).join('');
+    c.innerHTML=`<table class="tbl"><thead><tr><th>Module</th><th>dim</th><th>top</th><th>socle</th><th>pd</th><th>id</th><th>brick</th><th>${tau()}-translate</th><th>i${tau()}-rigid</th><th>i-rigid</th></tr></thead><tbody>${rows}</tbody></table>`;
+    attachTableColorize(c.querySelector('table'));
+  }});
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Tile A_{13} — Hom & Ext tables (with new Hom-tau table). Largest values pink.
+// ═══════════════════════════════════════════════════════════════════════════
+async function tileHomExt(){
+  tileSetBody(`<div class="rblock"><div class="rhead">Hom &amp; Ext tables</div><div class="rbody">
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
+      <button class="btn-c" onclick="renderHomTable('hom')">Hom Table</button>
+      <button class="btn-c" onclick="renderHomTable('ext1')">Ext$^1$ Table</button>
+      <button class="btn-c" onclick="renderHomTable('hom_tau')">Hom ${tau()}-Table</button>
+    </div>
+    <div id="ht-host"><div class="empty" style="padding:25px">Click a button above to view a table.</div></div>
+  </div></div>`);
+  rmath();
+}
+async function renderHomTable(kind){
+  const host=document.getElementById('ht-host');host.innerHTML='<div class="empty" style="padding:18px">Computing…</div>';
+  const path=kind==='hom'?'/rf/hom-table':kind==='ext1'?'/rf/ext1-table':'/rf/hom-tau-table';
+  const d=await api(path);if(!d)return;
+  const title=kind==='hom'?'dim Hom(X, Y)':kind==='ext1'?'dim Ext¹(X, Y)':'dim Hom(X, <span class="tau-letter">τ</span>Y)';
+  // find max
+  let mx=0;d.table.forEach(r=>r.forEach(v=>{if(v!==null&&v!==undefined&&v>mx)mx=v;}));
+  const head=`<th></th>${d.modules.map(n=>`<th title="${n}">${escapeShort(n)}</th>`).join('')}`;
+  const rows=d.table.map((r,i)=>`<tr><th title="${d.modules[i]}">${escapeShort(d.modules[i])}</th>${r.map(v=>{
+    if(v===null||v===undefined)return `<td style="color:var(--muted)">—</td>`;
+    const cls=v===0?'':(v===mx&&mx>0?'max':'nz');
+    return `<td class="${cls}">${v}</td>`;
+  }).join('')}</tr>`).join('');
+  const html=`<div class="rblock">
+    <div class="rhead">${title}<button class="btn-popout" onclick='popoutMatrix(${JSON.stringify(kind)},${JSON.stringify(title)},${JSON.stringify(d).replace(/'/g,"&#39;")})'>⊞ Open in window</button></div>
+    <div class="rbody">
+      <div class="scroll-x"><table class="mtbl" id="mtbl-${kind}"><thead><tr>${head}</tr></thead><tbody>${rows}</tbody></table></div>
+      <div style="margin-top:8px;font-size:11px"><span class="max-tag">max</span> = ${mx} (cells with the maximum value highlighted in pink).</div>
+    </div></div>`;
+  host.innerHTML=html;
+  attachTableColorize(document.getElementById('mtbl-'+kind));
+}
+function tauPlain(s){return '<span class="tau-letter">τ</span>'+(s||'');}
+function escapeShort(s){const t=String(s);return t.length>7?t.slice(0,6)+'…':t;}
+function popoutMatrix(kind,title,d){
+  // Title is plain text in the window header; render in body without max next
+  // to it. The max indicator goes BELOW the table and the word "max" is pink+bold.
+  const plainTitle=title.replace(/<[^>]+>/g,'');
+  popoutWindow({title:plainTitle,w:760,h:600,render:c=>{
+    c.style.padding='14px';
+    let mx=0;d.table.forEach(r=>r.forEach(v=>{if(v!==null&&v!==undefined&&v>mx)mx=v;}));
+    const head=`<th></th>${d.modules.map(n=>`<th title="${n}">${escapeShort(n)}</th>`).join('')}`;
+    const rows=d.table.map((r,i)=>`<tr><th title="${d.modules[i]}">${escapeShort(d.modules[i])}</th>${r.map(v=>{
+      if(v===null||v===undefined)return `<td style="color:var(--muted)">—</td>`;
+      const cls=v===0?'':(v===mx&&mx>0?'max':'nz');
+      return `<td class="${cls}">${v}</td>`;
+    }).join('')}</tr>`).join('');
+    c.innerHTML=`<div style="font-size:11px;color:var(--accent);margin-bottom:8px">${title}</div>
+      <table class="mtbl">${head?'<thead><tr>'+head+'</tr></thead>':''}<tbody>${rows}</tbody></table>
+      <div style="margin-top:10px;font-size:11px"><span class="max-tag">max</span> = ${mx} (cells with the maximum value highlighted in pink).</div>`;
+    attachTableColorize(c.querySelector('table'));
+  }});
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Tile A_{21} — Cycles & Directedness
+// ═══════════════════════════════════════════════════════════════════════════
+async function tileCycles(){
+  tileSetBody(`<div class="rblock"><div class="rhead">Cycles &amp; Directedness</div><div class="rbody">
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
+      <button class="btn-c" onclick="runShortCyclesView()">Short Cycles</button>
+      <button class="btn-c" onclick="runBrickCyclesView()">Brick Cycles</button>
+      <button class="btn-c" onclick="runIndecCyclesView()">Indec. Cycles</button>
+      <button class="btn-c" onclick="runITauRigidCyclesView()">i${tau()}-rigid Cycles</button>
+      <button class="btn-c" onclick="runIRigidCyclesView()">i-rigid Cycles</button>
+      <button class="btn-c" onclick="runDirectednessView()">Directedness</button>
+    </div>
+    <div id="cyc-host"><div class="empty" style="padding:25px">Choose an option above.</div></div>
+  </div></div>`);
+  rmath();
+}
+async function runShortCyclesView(){
+  const host=document.getElementById('cyc-host');host.innerHTML='<div class="empty" style="padding:14px">Computing…</div>';
+  const d=await api('/rf/short-cycles');if(!d)return;
+  const verdict=d.has_short_cycle?'<span class="false">true</span>':'<span class="true">false</span>';
+  let body=`<div class="kv" style="margin-bottom:10px"><span class="kk">Has short cycle</span><span class="vv">${verdict}</span><span class="kk"># Short cycles</span><span class="vv">${d.num_short_cycles}</span></div>`;
+  if(d.num_short_cycles===0){body+='<div class="empty" style="padding:12px">No short cycles.</div>';host.innerHTML=body;return;}
+  const rows=d.short_cycles.map(p=>`<tr><td>${p.x}</td><td style="color:var(--muted);text-align:center">⇄</td><td>${p.y}</td><td style="text-align:center">${p.hom_xy}</td><td style="text-align:center">${p.hom_yx}</td></tr>`).join('');
+  body+=`<div class="scroll-x"><table class="tbl" id="sc-table"><thead><tr><th>X</th><th></th><th>Y</th><th style="text-align:center">dim Hom(X,Y)</th><th style="text-align:center">dim Hom(Y,X)</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+  body+=`<div style="margin-top:10px"><button class="btn-popout" onclick='popoutShortCycles(${JSON.stringify(d).replace(/'/g,"&#39;")})'>⊞ Graph in new window</button></div><div id="sc-graph" style="margin-top:10px"></div>`;
+  host.innerHTML=body;attachTableColorize(document.getElementById('sc-table'));
+  drawShortCycleGraphInto(document.getElementById('sc-graph'),d);
+}
+function drawShortCycleGraphInto(host,d){
+  const nodes=[...new Set(d.short_cycles.flatMap(p=>[p.x,p.y]))].map(n=>({id:n,label:n}));
+  const edges=[];d.short_cycles.forEach(p=>{edges.push({from:p.x,to:p.y,label:p.hom_xy>1?String(p.hom_xy):''});edges.push({from:p.y,to:p.x,label:p.hom_yx>1?String(p.hom_yx):''});});
+  drawGenericGraph(host,{nodes,edges},{W:host.clientWidth||440,H:280,directed:true});
+}
+function popoutShortCycles(d){popoutWindow({title:'Short cycle graph',w:640,h:520,render:c=>{
+  c.style.padding='12px';const inner=document.createElement('div');inner.style.cssText='width:600px;height:460px';c.appendChild(inner);
+  const nodes=[...new Set(d.short_cycles.flatMap(p=>[p.x,p.y]))].map(n=>({id:n,label:n}));
+  const edges=[];d.short_cycles.forEach(p=>{edges.push({from:p.x,to:p.y,label:p.hom_xy>1?String(p.hom_xy):''});edges.push({from:p.y,to:p.x,label:p.hom_yx>1?String(p.hom_yx):''});});
+  drawGenericGraph(inner,{nodes,edges},{W:600,H:460});
+}});}
+
+async function runBrickCyclesView(){await renderCycleEndpoint('/rf/brick-cycles','Brick cycles');}
+async function runIndecCyclesView(){await renderCycleEndpoint('/rf/morphism-cycles','Indecomposable cycles');}
+async function runITauRigidCyclesView(){await renderCycleEndpoint('/rf/i-tau-rigid-cycles','i'+tau()+'-rigid cycles');}
+async function runIRigidCyclesView(){await renderCycleEndpoint('/rf/i-rigid-cycles','i-rigid cycles');}
+
+async function renderCycleEndpoint(path,title){
+  const host=document.getElementById('cyc-host');host.innerHTML='<div class="empty" style="padding:14px">Computing…</div>';
+  const d=await api(path);if(!d)return;
+  const cycles=d.cycles||[];const total=cycles.length;
+  const list=cycles.map((c,i)=>`<div class="cycle-item"><span style="color:var(--muted);font-size:9px">${i+1}.</span> ${c.join(' <span class="ca">→</span> ')} <span class="ca">→</span> ${c[0]}</div>`).join('') || '<div class="empty" style="padding:12px">No cycles found.</div>';
+  let popData={cycles};
+  host.innerHTML=`<div class="rhead" style="margin-bottom:8px;background:transparent;padding:0;border:none;display:flex;justify-content:space-between"><span>${title} (${total})</span><button class="btn-popout" onclick='popoutCycles(${JSON.stringify(title)},${JSON.stringify(cycles).replace(/'/g,"&#39;")})'>⊞ Open in window</button></div>
+    <div style="max-height:300px;overflow-y:auto">${list}</div>
+    <div id="cyc-graph" style="margin-top:10px"></div>`;
+  if(cycles.length){
+    // Build combined graph of cycle nodes/edges
+    const nodes=[...new Set(cycles.flat())].map(n=>({id:n,label:n}));
+    const edgesSet=new Set();const edges=[];
+    cycles.forEach(c=>{c.forEach((m,i)=>{const next=c[(i+1)%c.length];const k=m+'>>'+next;if(!edgesSet.has(k)){edgesSet.add(k);edges.push({from:m,to:next});}});});
+    drawGenericGraph(document.getElementById('cyc-graph'),{nodes,edges},{W:document.getElementById('cyc-graph').clientWidth||440,H:300});
+  }
+}
+function popoutCycles(title,cycles){
+  popoutWindow({title:title,w:640,h:520,render:c=>{
+    c.style.padding='12px';const inner=document.createElement('div');inner.style.cssText='width:600px;height:440px';c.appendChild(inner);
+    const nodes=[...new Set(cycles.flat())].map(n=>({id:n,label:n}));
+    const edgesSet=new Set();const edges=[];
+    cycles.forEach(cy=>{cy.forEach((m,i)=>{const next=cy[(i+1)%cy.length];const k=m+'>>'+next;if(!edgesSet.has(k)){edgesSet.add(k);edges.push({from:m,to:next});}});});
+    drawGenericGraph(inner,{nodes,edges},{W:600,H:440});
+  }});
+}
+
+async function runDirectednessView(){
+  const host=document.getElementById('cyc-host');host.innerHTML='<div class="empty" style="padding:14px">Computing…</div>';
+  const d=await api('/rf/directedness');if(!d)return;
+  const fmtD=v=>v?'<span class="true">true</span>':'<span class="false">false</span>';
+  host.innerHTML=`<div class="kv">
+    <span class="kk">Representation-directed</span><span class="vv">${fmtD(d.is_representation_directed)}</span>
+    <span class="kk">Brick-directed</span><span class="vv">${fmtD(d.is_brick_directed)}</span>
+    <span class="kk"># indec cycles</span><span class="vv">${d.num_indec_cycles}</span>
+    <span class="kk"># brick cycles</span><span class="vv">${d.num_brick_cycles}</span>
+    <span class="kk"># bricks</span><span class="vv">${d.num_bricks}</span>
+    <span class="kk"># indecs</span><span class="vv">${d.num_indecs}</span>
+  </div>`;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Tile A_{22} — Modules & Reps
+// ═══════════════════════════════════════════════════════════════════════════
+async function tileModulesReps(){
+  tileSetBody(`<div class="rblock"><div class="rhead">Modules &amp; Reps</div><div class="rbody">
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
+      <button class="btn-c" onclick="loadList('Semibricks','/rf/basic-semibricks')">Semibricks</button>
+      <button class="btn-c" onclick="loadList('${TAU}-rigid','/rf/basic-tau-rigids')"><span class="tau-letter">τ</span>-rigid</button>
+      <button class="btn-c" onclick="loadList('Support ${TAU}-tilting','/rf/basic-support-tau-tiltings')">Support <span class="tau-letter">τ</span>-tilting</button>
+      <button class="btn-c" onclick="loadList('${TAU}-tilting','/rf/basic-tau-tiltings')"><span class="tau-letter">τ</span>-tilting</button>
+      <button class="btn-c" onclick="loadList('Rigid','/rf/basic-rigids')">Rigid</button>
+      <button class="btn-c" onclick="loadList('Partial tilting','/rf/basic-partial-tiltings')">Partial tilting</button>
+      <button class="btn-c" onclick="loadList('Tilting','/rf/basic-tiltings')">Tilting</button>
+    </div>
+    <div id="mr-host"><div class="empty" style="padding:25px">Click an option above.</div></div>
+  </div></div>`);
+}
+async function loadList(label,path){
+  const host=document.getElementById('mr-host');host.innerHTML='<div class="empty" style="padding:14px">Computing…</div>';
+  const d=await api(path);if(!d)return;
+  const items=d.items||[];
+  const rows=items.map((it,i)=>{
+    const dimsLabel=it.dims&&it.dims.length?`<span style="color:var(--muted);font-size:10px">[${it.dims.join(', ')}]</span>`:'';
+    const names=it.names.length?it.names.map(n=>`<span class="pill">${n}</span>`).join(' '):'<span style="color:var(--muted)">∅</span>';
+    return `<tr><td style="color:var(--muted);font-size:9px">${i+1}</td><td>${names}</td><td style="text-align:center">${it.size}</td><td style="text-align:center">${dimsLabel}</td><td style="text-align:center">${it.total_dim}</td></tr>`;
+  }).join('');
+  host.innerHTML=`<div class="rhead" style="background:transparent;border:none;padding:0;display:flex;justify-content:space-between;margin-bottom:8px">
+    <span>${label} — ${d.count} basic module${d.count!==1?'s':''}</span>
+    <button class="btn-popout" onclick='popoutList(${JSON.stringify(label)},${JSON.stringify(d).replace(/'/g,"&#39;")})'>⊞ Open in window</button>
+  </div>
+  <div class="scroll-x"><table class="tbl" id="mr-table"><thead><tr><th>#</th><th>Module summands</th><th>Size</th><th>Dimensions</th><th>Total dim</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+  attachTableColorize(document.getElementById('mr-table'));rmath();
+}
+function popoutList(label,d){popoutWindow({title:label,w:760,h:560,render:c=>{
+  c.style.padding='14px';
+  const items=d.items||[];
+  const rows=items.map((it,i)=>{
+    const dimsLabel=it.dims&&it.dims.length?`[${it.dims.join(', ')}]`:'';
+    const names=it.names.length?it.names.join(', '):'∅';
+    return `<tr><td>${i+1}</td><td>${names}</td><td>${it.size}</td><td>${dimsLabel}</td><td>${it.total_dim}</td></tr>`;
+  }).join('');
+  c.innerHTML=`<div style="font-size:11px;color:var(--muted);margin-bottom:6px">${label} — ${d.count} basic modules</div>
+    <table class="tbl"><thead><tr><th>#</th><th>Module summands</th><th>Size</th><th>Dimensions</th><th>Total dim</th></tr></thead><tbody>${rows}</tbody></table>`;
+  attachTableColorize(c.querySelector('table'));
+}});}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Tile A_{23} — Splitting classes
+// ═══════════════════════════════════════════════════════════════════════════
+async function tileSplitting(){
+  tileSetBody(`<div class="rblock"><div class="rhead">Splitting classes</div><div class="rbody">
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
+      <button class="btn-c" onclick="runBrickSplittingView()">Brick Splitting</button>
+      <button class="btn-c" onclick="runSplittingView()">Splitting</button>
+    </div>
+    <div id="sp-host"><div class="empty" style="padding:25px">Choose an option above.</div></div>
+  </div></div>`);
+}
+async function runBrickSplittingView(){
+  const host=document.getElementById('sp-host');host.innerHTML='<div class="empty" style="padding:14px">Computing…</div>';
+  const d=await api('/rf/brick-splitting');if(!d)return;
+  const numBS=d.torsion_classes.filter(t=>t.is_brick_splitting).length;
+  const allTick=d.all_brick_splitting?'<span class="true">true</span>':'<span class="false">false</span>';
+  const rows=d.torsion_classes.map((t,i)=>{
+    const bs=t.is_brick_splitting?'<span class="true">true</span>':'<span class="false">false</span>';
+    const tc=t.torsion_class.length?t.torsion_class.join(', '):'∅';
+    const tf=t.torsion_free_class&&t.torsion_free_class.length?t.torsion_free_class.join(', '):'∅';
+    const bt=t.bricks_in_torsion&&t.bricks_in_torsion.length?t.bricks_in_torsion.join(', '):'—';
+    const bf=t.bricks_in_torsion_free&&t.bricks_in_torsion_free.length?t.bricks_in_torsion_free.join(', '):'—';
+    const mis=t.missing_bricks&&t.missing_bricks.length?'<span class="false">'+t.missing_bricks.join(', ')+'</span>':'—';
+    return `<tr><td style="color:var(--muted);font-size:9px">${i}</td><td>${tc}</td><td style="text-align:center">${bs}</td><td style="color:var(--accent2)">${bt}</td><td style="color:var(--accent4)">${bf}</td><td>${mis}</td></tr>`;
+  }).join('');
+  host.innerHTML=`<div style="display:flex;justify-content:space-between;margin-bottom:8px">
+      <span style="font-size:11px;color:var(--muted)">${numBS} of ${d.num_torsion_classes} torsion classes are brick-splitting</span>
+      <button class="btn-popout" onclick='popoutSplittingTable("Brick Splitting",${JSON.stringify(d).replace(/'/g,"&#39;")},"brick")'>⊞ Open in window</button>
+    </div>
+    <div class="kv" style="margin-bottom:10px"><span class="kk">All brick-splitting</span><span class="vv">${allTick}</span></div>
+    <div class="scroll-x"><table class="tbl" id="bs-tbl"><thead><tr><th>#</th><th>Torsion class T</th><th>BS</th><th>Bricks in T</th><th>Bricks in T<sup>⊥</sup></th><th>Missing</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+  attachTableColorize(document.getElementById('bs-tbl'));
+}
+async function runSplittingView(){
+  const host=document.getElementById('sp-host');host.innerHTML='<div class="empty" style="padding:14px">Computing…</div>';
+  const d=await api('/rf/splitting-torsion');if(!d)return;
+  const numS=d.torsion_classes.filter(t=>t.is_splitting).length;
+  const allTick=d.all_splitting?'<span class="true">true</span>':'<span class="false">false</span>';
+  const rows=d.torsion_classes.map((t,i)=>{
+    const sp=t.is_splitting?'<span class="true">true</span>':'<span class="false">false</span>';
+    const tc=t.torsion_class.length?t.torsion_class.join(', '):'∅';
+    const tf=t.torsion_free_class&&t.torsion_free_class.length?t.torsion_free_class.join(', '):'∅';
+    const it_=t.indecs_in_torsion?.length?t.indecs_in_torsion.join(', '):'—';
+    const itf=t.indecs_in_torsion_free?.length?t.indecs_in_torsion_free.join(', '):'—';
+    const mis=t.missing_indecs?.length?'<span class="false">'+t.missing_indecs.join(', ')+'</span>':'—';
+    return `<tr><td style="color:var(--muted);font-size:9px">${i}</td><td>${tc}</td><td style="text-align:center">${sp}</td><td style="color:var(--accent2)">${it_}</td><td style="color:var(--accent4)">${itf}</td><td>${mis}</td></tr>`;
+  }).join('');
+  host.innerHTML=`<div style="display:flex;justify-content:space-between;margin-bottom:8px">
+      <span style="font-size:11px;color:var(--muted)">${numS} of ${d.num_torsion_classes} torsion classes are splitting</span>
+      <button class="btn-popout" onclick='popoutSplittingTable("Splitting",${JSON.stringify(d).replace(/'/g,"&#39;")},"general")'>⊞ Open in window</button>
+    </div>
+    <div class="kv" style="margin-bottom:10px"><span class="kk">All splitting</span><span class="vv">${allTick}</span></div>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:8px">A torsion class T is <em>splitting</em> if every indecomposable belongs to T or to its torsion-free class T<sup>⊥</sup>.</div>
+    <div class="scroll-x"><table class="tbl" id="spl-tbl"><thead><tr><th>#</th><th>Torsion class T</th><th>Splitting</th><th>Indecs in T</th><th>Indecs in T<sup>⊥</sup></th><th>Missing</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+  attachTableColorize(document.getElementById('spl-tbl'));
+}
+
+// Pop-out helper for Brick Splitting / Splitting views.
+function popoutSplittingTable(title,d,kind){
+  popoutWindow({title:title,w:820,h:580,render:c=>{
+    c.style.padding='14px';
+    const isBrick=kind==='brick';
+    const all=isBrick?d.all_brick_splitting:d.all_splitting;
+    const num=d.torsion_classes.filter(t=>(isBrick?t.is_brick_splitting:t.is_splitting)).length;
+    const head=isBrick
+      ? '<th>#</th><th>Torsion class T</th><th>BS</th><th>Bricks in T</th><th>Bricks in T<sup>⊥</sup></th><th>Missing</th>'
+      : '<th>#</th><th>Torsion class T</th><th>Splitting</th><th>Indecs in T</th><th>Indecs in T<sup>⊥</sup></th><th>Missing</th>';
+    const rows=d.torsion_classes.map((t,i)=>{
+      const flag=(isBrick?t.is_brick_splitting:t.is_splitting)?'<span class="true">true</span>':'<span class="false">false</span>';
+      const tc=t.torsion_class.length?t.torsion_class.join(', '):'∅';
+      const colA=(isBrick?t.bricks_in_torsion:t.indecs_in_torsion)||[];
+      const colB=(isBrick?t.bricks_in_torsion_free:t.indecs_in_torsion_free)||[];
+      const colM=(isBrick?t.missing_bricks:t.missing_indecs)||[];
+      const m=colM.length?'<span class="false">'+colM.join(', ')+'</span>':'—';
+      return `<tr><td>${i}</td><td>${tc}</td><td style="text-align:center">${flag}</td><td>${colA.length?colA.join(', '):'—'}</td><td>${colB.length?colB.join(', '):'—'}</td><td>${m}</td></tr>`;
+    }).join('');
+    c.innerHTML=`<div style="font-size:11px;color:var(--muted);margin-bottom:6px">All ${isBrick?'brick-':''}splitting: ${all?'<span class="true">true</span>':'<span class="false">false</span>'} · ${num} of ${d.num_torsion_classes}</div>
+      <table class="tbl"><thead><tr>${head}</tr></thead><tbody>${rows}</tbody></table>`;
+    attachTableColorize(c.querySelector('table'));
+  }});
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Tile A_{31} — τ-Phenomena
+// ═══════════════════════════════════════════════════════════════════════════
+async function tileTauPheno(){
+  tileSetBody(`<div class="rblock"><div class="rhead">${tau()}-Phenomena</div><div class="rbody">
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
+      <button class="btn-c" onclick="runARQuiverView()">AR Quiver</button>
+      <button class="btn-c" onclick="runTauIndView()">${tau()}-ind</button>
+      <button class="btn-c" onclick="runTauRigidSummaryView()">${tau()}-rigid</button>
+      <button class="btn-c" onclick="runTauHasseView()">${tau()}-Hasse</button>
+    </div>
+    <div id="tp-host"><div class="empty" style="padding:25px">Choose an option above.</div></div>
+  </div></div>`);
+  rmath();
+}
+async function runARQuiverView(){
+  const host=document.getElementById('tp-host');host.innerHTML='<div class="empty" style="padding:14px">Computing…</div>';
+  const d=await api('/rf/ar-quiver-full');if(!d)return;
+  window._arData = d;
+  host.innerHTML=`<div style="display:flex;justify-content:space-between;margin-bottom:8px;align-items:center">
+    <span style="font-size:11px;color:var(--muted)">${d.vertices.length} vertices · ${d.arrows.length} irreducible arrows · ${tau()} dashed</span>
+    <button class="btn-popout" onclick="popoutAR(window._arData)">⊞ Open in window</button></div>
+    <div id="ar-host" style="height:380px;width:100%;border:1px solid var(--border);border-radius:4px;background:#0f0e0c;overflow:hidden"></div>`;
+  // Defer to next frame so the host has its dimensions, then again to be safe.
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    const h=document.getElementById('ar-host');
+    if(h) drawARQuiver(h, d);
+  }));
+  rmath();
+}
+function drawARQuiver(host,d){
+  // Robust layout. Compute W/H BEFORE clearing host (drawGenericGraph clears).
+  const W = Math.max(300, host.clientWidth || host.parentElement?.clientWidth || 620);
+  const H = Math.max(280, host.clientHeight || 380);
+  const xs=d.vertices.map(v=>v.x), ys=d.vertices.map(v=>v.y);
+  let minX=Math.min(...xs), maxX=Math.max(...xs), minY=Math.min(...ys), maxY=Math.max(...ys);
+  // Avoid div-by-zero
+  if(maxX===minX) maxX = minX + 1;
+  if(maxY===minY) maxY = minY + 1;
+  const PAD = 50;
+  const sx=(W-2*PAD)/(maxX-minX), sy=(H-2*PAD)/(maxY-minY);
+  const s = Math.min(sx, sy, 1.2);
+  const positions={};
+  d.vertices.forEach(v=>{positions[v.name]={x: PAD + (v.x-minX)*s, y: PAD + (v.y-minY)*s};});
+  const nodes=d.vertices.map(v=>{
+    const isP=d.projectives.includes(v.name), isI=d.injectives.includes(v.name);
+    const col=isP&&isI?'#c96b8a':isP?'#d4a853':isI?'#7eb8a4':'#4a90d4';
+    return {id:v.name, label:v.name, color:col, headerInfo:'Indec: '+v.name};
+  });
+  const edges=d.arrows.map(a=>({from:a.from, to:a.to, color:'#4a70d4',
+                                  headerInfo:'Irreducible arrow: '+a.from+' → '+a.to}));
+  Object.entries(d.tau).forEach(([f,t])=>{
+    edges.push({from:f, to:t, color:'#c96b8a', style:'dashed', label:'τ',
+                headerInfo:'τ('+f+') = '+t});
+  });
+  drawGenericGraph(host, {nodes, edges}, {W, H, positions, NR:18, directed:true});
+}
+function popoutAR(d){popoutWindow({title:'AR Quiver',w:780,h:580,render:(c,{window:win})=>{
+  c.style.padding='12px';
+  const inner=document.createElement('div');
+  inner.style.cssText='width:100%;height:520px;position:relative';
+  c.appendChild(inner);
+  requestAnimationFrame(()=>drawARQuiver(inner,d));
+  new ResizeObserver(()=>drawARQuiver(inner,d)).observe(win);
+}});}
+
+async function runTauIndView(){
+  const host=document.getElementById('tp-host');host.innerHTML='<div class="empty" style="padding:14px">Computing…</div>';
+  const d=await api('/rf/tau-indec-table');if(!d)return;
+  const rows=d.map((r,i)=>`<tr><td>${r.name}</td><td>${r.dim}</td><td>${r.tau_name||'—'}</td><td>${r.tau_dim??'—'}</td><td>${r.hom_x_taux??'—'}</td></tr>`).join('');
+  host.innerHTML=`<div class="rhead" style="background:transparent;border:none;padding:0;margin-bottom:6px;display:flex;justify-content:space-between"><span>${tau()}-ind table</span>
+    <button class="btn-popout" onclick='popoutTauInd(${JSON.stringify(d).replace(/'/g,"&#39;")})'>⊞ Open in window</button></div>
+    <div class="scroll-x"><table class="tbl" id="tau-ind-tbl"><thead><tr><th>X</th><th>dim X</th><th>${tau()}X</th><th>dim ${tau()}X</th><th>dim Hom(X, ${tau()}X)</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+  attachTableColorize(document.getElementById('tau-ind-tbl'));rmath();
+}
+function popoutTauInd(d){popoutWindow({title:'τ-ind table',w:680,h:560,render:c=>{
+  c.style.padding='14px';
+  const rows=d.map((r,i)=>`<tr><td>${r.name}</td><td>${r.dim}</td><td>${r.tau_name||'—'}</td><td>${r.tau_dim??'—'}</td><td>${r.hom_x_taux??'—'}</td></tr>`).join('');
+  c.innerHTML=`<table class="tbl"><thead><tr><th>X</th><th>dim X</th><th>τX</th><th>dim τX</th><th>dim Hom(X, τX)</th></tr></thead><tbody>${rows}</tbody></table>`;
+  attachTableColorize(c.querySelector('table'));
+}});}
+
+async function runTauRigidSummaryView(){
+  const host=document.getElementById('tp-host');host.innerHTML='<div class="empty" style="padding:14px">Computing…</div>';
+  const d=await api('/rf/tau-rigid-summary');if(!d)return;
+  const rows=d.rows.map((r,i)=>`<tr><td>${r.names.length?r.names.map(n=>`<span class="pill">${n}</span>`).join(' '):'∅'}</td><td style="text-align:center">${r.total_dim}</td><td style="text-align:center">${r.is_support_tau_tilting?'<span class="true">true</span>':'<span class="false">false</span>'}</td><td style="text-align:center">${r.is_tau_tilting?'<span class="true">true</span>':'<span class="false">false</span>'}</td></tr>`).join('');
+  host.innerHTML=`<div style="font-size:11px;color:var(--muted);margin-bottom:8px">
+    # ind ${tau()}-rigid: ${d.num_indec_tau_rigid} · # basic ${tau()}-rigid: ${d.num_basic_tau_rigid} · # support ${tau()}-tilting: ${d.num_support_tau_tilting} · # ${tau()}-tilting: ${d.num_tau_tilting}
+    <button class="btn-popout" style="float:right" onclick='popoutTauRigidSummary(${JSON.stringify(d).replace(/'/g,"&#39;")})'>⊞ Open in window</button>
+  </div>
+  <div class="scroll-x"><table class="tbl" id="tau-rigid-tbl"><thead><tr><th>${tau()}-rigid module</th><th>dim</th><th>support ${tau()}-tilting</th><th>${tau()}-tilting</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+  attachTableColorize(document.getElementById('tau-rigid-tbl'));rmath();
+}
+function popoutTauRigidSummary(d){popoutWindow({title:'τ-rigid summary',w:760,h:560,render:c=>{
+  c.style.padding='14px';
+  const rows=d.rows.map(r=>`<tr><td>${r.names.length?r.names.join(', '):'∅'}</td><td>${r.total_dim}</td><td>${r.is_support_tau_tilting?'<span class="true">true</span>':'<span class="false">false</span>'}</td><td>${r.is_tau_tilting?'<span class="true">true</span>':'<span class="false">false</span>'}</td></tr>`).join('');
+  c.innerHTML=`<div style="font-size:11px;color:var(--muted);margin-bottom:6px"># ind τ-rigid: ${d.num_indec_tau_rigid} · # basic τ-rigid: ${d.num_basic_tau_rigid} · # support τ-tilting: ${d.num_support_tau_tilting} · # τ-tilting: ${d.num_tau_tilting}</div>
+  <table class="tbl"><thead><tr><th>τ-rigid module</th><th>dim</th><th>support τ-tilting</th><th>τ-tilting</th></tr></thead><tbody>${rows}</tbody></table>`;
+  attachTableColorize(c.querySelector('table'));
+}});}
+
+async function runTauHasseView(){
+  const host=document.getElementById('tp-host');host.innerHTML='<div class="empty" style="padding:14px">Computing…</div>';
+  const d=await api('/rf/tau-tilting-hasse');if(!d)return;
+  window._tauHasseData = d;
+  host.innerHTML=`<div style="display:flex;justify-content:space-between;margin-bottom:8px;align-items:center">
+    <span style="font-size:11px;color:var(--muted)">${d.vertices.length} support ${tau()}-tilting modules</span>
+    <button class="btn-popout" onclick="popoutTauHasse(window._tauHasseData)">⊞ Open in window</button></div>
+    <div id="tau-hasse-host" style="height:380px;width:100%;border:1px solid var(--border);border-radius:4px;background:#0f0e0c;overflow:hidden"></div>`;
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    const h=document.getElementById('tau-hasse-host'); if(h) drawHasseLevels(h, d);
+  }));
+  rmath();
+}
+function drawHasseLevels(host,d){
+  const verts=d.vertices||[];
+  const arrows=d.arrows||[];
+  const tors=d.torsion_classes||verts;
+  const W=host.clientWidth||580,H=host.clientHeight||340;
+  const n=verts.length;
+  const adj_up={},adj_dn={};for(let i=0;i<n;i++){adj_up[i]=[];adj_dn[i]=[];}
+  arrows.forEach(([i,j])=>{adj_up[i].push(j);adj_dn[j].push(i);});
+  const indeg=new Array(n).fill(0);arrows.forEach(([i,j])=>indeg[j]++);
+  const queue=[];for(let i=0;i<n;i++)if(indeg[i]===0)queue.push(i);
+  const rank=new Array(n).fill(0);let qi=0;
+  while(qi<queue.length){const u=queue[qi++];adj_up[u].forEach(v=>{rank[v]=Math.max(rank[v],rank[u]+1);indeg[v]--;if(indeg[v]===0)queue.push(v);});}
+  const maxR=Math.max(...rank,0);
+  const byRank={};for(let i=0;i<n;i++)(byRank[rank[i]]=byRank[rank[i]]||[]).push(i);
+  const positions={};const pad=40;
+  Object.entries(byRank).forEach(([r,nodes])=>{
+    const ri=Number(r);const y=pad+(maxR-ri)*(H-2*pad)/Math.max(maxR,1);
+    nodes.forEach((ni,ci)=>{positions[ni]={x:pad+(ci+1)*(W-2*pad)/(nodes.length+1),y};});
+  });
+  const nodes=verts.map((stt,i)=>{
+    const tc=tors[i]||[];
+    const lbl=tc.length?(tc.length<=2?tc.join(','):tc.slice(0,2).join(',')+'…'):'∅';
+    return {id:i,label:lbl,color:'#7eb8a4',content:tc,
+            headerInfo:'T<sub>'+i+'</sub> = {'+(tc.length?tc.join(', '):'∅')+'}'};
+  });
+  const edges=arrows.map(([i,j])=>({from:i,to:j,color:'#7eb8a4'}));
+  drawGenericGraph(host,{nodes,edges},{W,H,positions,NR:18});
+}
+function popoutTauHasse(d){popoutWindow({title:'τ-Hasse',w:760,h:600,render:c=>{
+  c.style.padding='12px';const inner=document.createElement('div');inner.style.cssText='width:720px;height:520px';c.appendChild(inner);
+  drawHasseLevels(inner,d);
+}});}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Tile A_{32} — Lattices & Quivers
+// ═══════════════════════════════════════════════════════════════════════════
+async function tileLatticesQuivers(){
+  tileSetBody(`<div class="rblock"><div class="rhead">Lattices &amp; Quivers</div><div class="rbody">
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
+      <button class="btn-c" onclick="runARQuiverView_LQ()">AR Quiver</button>
+      <button class="btn-c" onclick="runMorphQuiverView()">Morph Quiver</button>
+      <button class="btn-c" onclick="runBrickQuiverView()">Brick Quiver</button>
+      <button class="btn-c" onclick="runTorsionLatticeView()">Torsion Lattice</button>
+      <button class="btn-c" onclick="runWideLatticeView()">Wide Lattice</button>
+    </div>
+    <div id="lq-host"><div class="empty" style="padding:25px">Choose an option above.</div></div>
+  </div></div>`);
+}
+async function runARQuiverView_LQ(){
+  const host=document.getElementById('lq-host');host.innerHTML='<div class="empty" style="padding:14px">Computing…</div>';
+  const d=await api('/rf/ar-quiver-full');if(!d)return;
+  window._arData = d;
+  host.innerHTML=`<div style="display:flex;justify-content:space-between;margin-bottom:8px;align-items:center">
+    <span style="font-size:11px;color:var(--muted)">${d.vertices.length} vertices · ${d.arrows.length} arrows · ${tau()} dashed</span>
+    <button class="btn-popout" onclick="popoutAR(window._arData)">⊞ Open in window</button></div>
+    <div id="ar-host-lq" style="height:380px;width:100%;border:1px solid var(--border);border-radius:4px;background:#0f0e0c;overflow:hidden"></div>`;
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    const h=document.getElementById('ar-host-lq'); if(h) drawARQuiver(h, d);
+  }));
+  rmath();
+}
+async function runMorphQuiverView(){
+  const host=document.getElementById('lq-host');host.innerHTML='<div class="empty" style="padding:14px">Computing…</div>';
+  const d=await api('/rf/morphism-quiver');if(!d)return;
+  window._morphData = d;
+  host.innerHTML=`<div style="display:flex;justify-content:space-between;margin-bottom:8px;align-items:center">
+    <span style="font-size:11px;color:var(--muted)">${d.vertices.length} vertices · ${d.arrows.length} arrows</span>
+    <button class="btn-popout" onclick="popoutMorph(window._morphData)">⊞ Open in window</button></div>
+    <div id="mq-host" style="height:380px;width:100%;border:1px solid var(--border);border-radius:4px;background:#0f0e0c;overflow:hidden"></div>`;
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    const h=document.getElementById('mq-host'); if(h) drawSimpleQuiver(h, d);
+  }));
+}
+function drawSimpleQuiver(host,d){
+  const nodes=d.vertices.map(v=>({id:v,label:v,color:'#4a90d4',
+    headerInfo:'Vertex: '+v}));
+  const edges=(d.arrows||[]).map(a=>{
+    const dim=a.dim??a.hom_dim;
+    return {
+      from:a.from,to:a.to,
+      label:dim>1?String(dim):'',
+      headerInfo:'dimHom('+a.from+','+a.to+') = '+(dim??'?'),
+    };
+  });
+  drawGenericGraph(host,{nodes,edges},{W:host.clientWidth||580,H:host.clientHeight||340,NR:18});
+}
+function popoutMorph(d){popoutWindow({title:'Morph Quiver',w:760,h:560,render:c=>{c.style.padding='12px';const inner=document.createElement('div');inner.style.cssText='width:720px;height:480px';c.appendChild(inner);drawSimpleQuiver(inner,d);}});}
+
+async function runBrickQuiverView(){
+  const host=document.getElementById('lq-host');host.innerHTML='<div class="empty" style="padding:14px">Computing…</div>';
+  const d=await api('/rf/brick-quiver');if(!d)return;
+  window._brickData = d;
+  host.innerHTML=`<div style="display:flex;justify-content:space-between;margin-bottom:8px;align-items:center">
+    <span style="font-size:11px;color:var(--muted)">${d.vertices.length} bricks · ${d.is_brick_directed?'<span class="true">brick-directed</span>':'<span class="false">brick-cyclic</span>'}</span>
+    <button class="btn-popout" onclick="popoutBrickQuiver(window._brickData)">⊞ Open in window</button></div>
+    <div id="bq-host" style="height:380px;width:100%;border:1px solid var(--border);border-radius:4px;background:#0f0e0c;overflow:hidden"></div>`;
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    const h=document.getElementById('bq-host'); if(h) drawBrickQuiverInto(h, d);
+  }));
+}
+function drawBrickQuiverInto(host,d){
+  const lp=new Set((d.longest_path_edges||[]).map(e=>e.from+'>>'+e.to));
+  const nodes=d.vertices.map(v=>({id:v,label:v,color:'#7eb8a4',headerInfo:'Brick: '+v}));
+  const edges=d.arrows.map(a=>({
+    from:a.from,to:a.to,
+    color:lp.has(a.from+'>>'+a.to)?'#d4a853':'#4a90d4',
+    thickness:lp.has(a.from+'>>'+a.to)?3:1.8,
+    label:a.hom_dim>1?String(a.hom_dim):'',
+    headerInfo:'dimHom('+a.from+','+a.to+') = '+a.hom_dim,
+  }));
+  drawGenericGraph(host,{nodes,edges},{W:host.clientWidth||580,H:host.clientHeight||340,NR:18});
+}
+function popoutBrickQuiver(d){popoutWindow({title:'Brick Quiver',w:760,h:560,render:c=>{c.style.padding='12px';const inner=document.createElement('div');inner.style.cssText='width:720px;height:480px';c.appendChild(inner);drawBrickQuiverInto(inner,d);}});}
+
+async function runTorsionLatticeView(){
+  const host=document.getElementById('lq-host');host.innerHTML='<div class="empty" style="padding:14px">Computing…</div>';
+  const d=await api('/rf/trim-lattice');if(!d)return;
+  window._torLatData = d;
+  host.innerHTML=`<div style="display:flex;justify-content:space-between;margin-bottom:8px;align-items:center">
+    <span style="font-size:11px;color:var(--muted)">${d.num_torsion_classes} torsion classes · ${d.is_trim?'<span class="true">trim</span>':'<span class="false">not trim</span>'}</span>
+    <button class="btn-popout" onclick="popoutTorsionLattice(window._torLatData)">⊞ Open in window</button></div>
+    <div id="tl-host" style="height:420px;width:100%;border:1px solid var(--border);border-radius:4px;background:#0f0e0c;overflow:hidden"></div>`;
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    const h=document.getElementById('tl-host'); if(h) drawTorsionLattice(h, d);
+  }));
+}
+function drawTorsionLattice(host,d){
+  const tors=d.torsion_classes||[];
+  const arrows=d.hasse_arrows||[];
+  const bs=new Set(d.brick_splitting_indices||[]);
+  const labels=d.edge_labels||{};
+  const verts=tors.map((tc,i)=>tc);
+  const fakeData={vertices:verts,arrows:arrows,torsion_classes:tors};
+  // similar to drawHasseLevels but uses bs colours and edge labels
+  const W=host.clientWidth||580,H=host.clientHeight||380;
+  const n=verts.length;
+  const adj_up={},adj_dn={};for(let i=0;i<n;i++){adj_up[i]=[];adj_dn[i]=[];}
+  arrows.forEach(([i,j])=>{adj_up[i].push(j);adj_dn[j].push(i);});
+  const indeg=new Array(n).fill(0);arrows.forEach(([i,j])=>indeg[j]++);
+  const queue=[];for(let i=0;i<n;i++)if(indeg[i]===0)queue.push(i);
+  const rank=new Array(n).fill(0);let qi=0;
+  while(qi<queue.length){const u=queue[qi++];adj_up[u].forEach(v=>{rank[v]=Math.max(rank[v],rank[u]+1);indeg[v]--;if(indeg[v]===0)queue.push(v);});}
+  const maxR=Math.max(...rank,0);
+  const byRank={};for(let i=0;i<n;i++)(byRank[rank[i]]=byRank[rank[i]]||[]).push(i);
+  const positions={};const pad=40;
+  Object.entries(byRank).forEach(([r,nodes])=>{
+    const ri=Number(r);const y=pad+(maxR-ri)*(H-2*pad)/Math.max(maxR,1);
+    nodes.forEach((ni,ci)=>{positions[ni]={x:pad+(ci+1)*(W-2*pad)/(nodes.length+1),y};});
+  });
+  const nodes=tors.map((tc,i)=>{
+    const isTop=rank[i]===maxR,isBot=rank[i]===0;
+    const lbl=isTop?'⊤':isBot?'⊥':(tc.length<=2?tc.join(','):tc.slice(0,2).join(',')+'…');
+    const content=tc;
+    return {id:i,label:lbl,color:bs.has(i)?'#7eb8a4':'#c96b5a',content,
+      headerInfo:'T<sub>'+i+'</sub> = {'+(tc.length?tc.join(', '):'∅')+'} '+(bs.has(i)?'<span class="true">[BS]</span>':'<span class="false">[not BS]</span>')};
+  });
+  const edges=arrows.map(([i,j])=>({from:i,to:j,color:bs.has(i)&&bs.has(j)?'#7eb8a4':'#c96b5a',label:labels[i+','+j]||''}));
+  drawGenericGraph(host,{nodes,edges},{W,H,positions,NR:20});
+}
+function popoutTorsionLattice(d){popoutWindow({title:'Torsion Lattice',w:760,h:600,render:c=>{c.style.padding='12px';const inner=document.createElement('div');inner.style.cssText='width:720px;height:520px';c.appendChild(inner);drawTorsionLattice(inner,d);}});}
+
+async function runWideLatticeView(){
+  const host=document.getElementById('lq-host');host.innerHTML='<div class="empty" style="padding:14px">Computing…</div>';
+  const d=await api('/rf/wide-lattice');if(!d)return;
+  window._wideLatData = d;
+  host.innerHTML=`<div style="display:flex;justify-content:space-between;margin-bottom:8px;align-items:center">
+    <span style="font-size:11px;color:var(--muted)">${d.size} wide subcategories · inclusion order</span>
+    <button class="btn-popout" onclick="popoutWideLattice(window._wideLatData)">⊞ Open in window</button></div>
+    <div id="wl-host" style="height:420px;width:100%;border:1px solid var(--border);border-radius:4px;background:#0f0e0c;overflow:hidden"></div>`;
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    const h=document.getElementById('wl-host'); if(h) drawWideLattice(h, d);
+  }));
+}
+function drawWideLattice(host,d){
+  const W=host.clientWidth||580,H=host.clientHeight||380;
+  const wides=d.vertices||[];const arrows=d.arrows||[];const n=wides.length;
+  const adj_up={},indeg=new Array(n).fill(0);for(let i=0;i<n;i++)adj_up[i]=[];
+  arrows.forEach(([i,j])=>{adj_up[i].push(j);indeg[j]++;});
+  const queue=[];for(let i=0;i<n;i++)if(indeg[i]===0)queue.push(i);
+  const rank=new Array(n).fill(0);let qi=0;
+  while(qi<queue.length){const u=queue[qi++];adj_up[u].forEach(v=>{rank[v]=Math.max(rank[v],rank[u]+1);indeg[v]--;if(indeg[v]===0)queue.push(v);});}
+  const maxR=Math.max(...rank,0);
+  const byRank={};for(let i=0;i<n;i++)(byRank[rank[i]]=byRank[rank[i]]||[]).push(i);
+  const positions={};const pad=40;
+  Object.entries(byRank).forEach(([r,nodes])=>{
+    const ri=Number(r);const y=pad+(maxR-ri)*(H-2*pad)/Math.max(maxR,1);
+    nodes.forEach((ni,ci)=>{positions[ni]={x:pad+(ci+1)*(W-2*pad)/(nodes.length+1),y};});
+  });
+  const nodes=wides.map((w,i)=>{
+    const isTop=rank[i]===maxR,isBot=rank[i]===0;
+    const lbl=isTop?'⊤':isBot?'⊥':(w.length<=2?w.join(','):w.slice(0,2).join(',')+'…');
+    return {id:i,label:lbl,color:'#9f8fda',content:w,
+      headerInfo:'W<sub>'+i+'</sub> = {'+(w.length?w.join(', '):'∅')+'}'};
+  });
+  const edges=arrows.map(([i,j])=>({from:i,to:j,color:'#9f8fda'}));
+  drawGenericGraph(host,{nodes,edges},{W,H,positions,NR:20});
+}
+function popoutWideLattice(d){popoutWindow({title:'Wide Lattice',w:760,h:600,render:c=>{c.style.padding='12px';const inner=document.createElement('div');inner.style.cssText='width:720px;height:520px';c.appendChild(inner);drawWideLattice(inner,d);}});}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Tile A_{33} — Generalized Barbell
+// ═══════════════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════════════════
+// Tile A_{41} — Fringed Algebra (only for gentle algebras)
+// ═══════════════════════════════════════════════════════════════════════════
+async function tileFringedAlgebra(){
+  tileSetBody('<div class="empty">Computing fringed algebra…</div>');
+  const d = await api('/fringed');
+  if (!d) return;
+  if (!d.is_gentle){
+    tileSetBody(`<div class="rblock"><div class="rhead">Fringed Algebra</div>
+      <div class="rbody"><div class="empty" style="padding:30px;font-size:13px;color:var(--error)">
+      ${d.error || 'The input algebra is not gentle. This function works only for gentle algebras.'}
+      </div></div></div>`);
+    return;
+  }
+  // Stash data for the pop-out window
+  window._fringedData = d;
+  tileSetBody(`<div class="rblock"><div class="rhead">Fringed Algebra Â of A
+    <button class="btn-popout" onclick="openFringedWindow()">⊞ Open in window</button></div>
+    <div class="rbody">
+      <div style="font-size:11px;color:var(--muted);line-height:1.6;margin-bottom:10px">
+        Fringing adds vertices and arrows so every original vertex of Q has exactly two
+        incoming and two outgoing arrows in Q̂. Per BDMTY §3.
+      </div>
+      <div class="kv">
+        <span class="kk">Original vertices</span>
+          <span class="vv">${d.original_vertices.length}</span>
+        <span class="kk">Fringe vertices added</span>
+          <span class="vv">${d.fringe_vertices.length}</span>
+        <span class="kk">Original arrows</span>
+          <span class="vv">${d.original_arrows.length}</span>
+        <span class="kk">Fringe arrows added</span>
+          <span class="vv">${d.fringe_arrow_labels.length}</span>
+        <span class="kk">Quadratic relations in I</span>
+          <span class="vv">${d.relations_I.length}</span>
+        <span class="kk">Quadratic relations in Î\\I</span>
+          <span class="vv">${d.relations_I_hat_minus_I.length}</span>
+      </div>
+      <div style="margin-top:10px">
+        <button class="btn-c" onclick="openFringedWindow()">⊞ Open Fringed Algebra in resizable window</button>
+      </div>
+    </div></div>`);
+}
+
+function openFringedWindow(){
+  const d = window._fringedData;
+  if (!d){ alert('Fringed data not loaded — re-open the Fringed Algebra tile first.'); return; }
+  popoutWindow({title:'Fringed Algebra Â of A', w:780, h:620, render:(c, {window:win})=>{
+    c.innerHTML='';
+    c.style.padding='0';
+    // Top bar with the four function buttons
+    const bar = document.createElement('div');
+    bar.style.cssText = 'display:flex;gap:6px;padding:7px 12px;background:#1a1916;border-bottom:1px solid #2e2c29;flex-shrink:0';
+    bar.innerHTML = `
+      <button class="btn-c" onclick="window._fringedAction('indecomposables')">Indecomposables</button>
+      <button class="btn-c" onclick="window._fringedAction('cohook')">Cohook completion</button>
+      <button class="btn-c" onclick="window._fringedAction('kisses')">Kisses</button>
+      <button class="btn-c" onclick="window._fringedAction('tbd')">TBD</button>
+      <span style="margin-left:auto;font-size:10px;color:#6a6560;align-self:center">
+        ${d.original_vertices.length} original + ${d.fringe_vertices.length} fringe vertices
+      </span>`;
+    c.appendChild(bar);
+    // Diagram area
+    const diagram = document.createElement('div');
+    diagram.style.cssText = 'flex:1;min-height:380px;position:relative;background:#0f0e0c';
+    c.appendChild(diagram);
+    // Relations area at the bottom (two lines: I and Î\I)
+    const rel = document.createElement('div');
+    rel.style.cssText = 'background:#1a1916;border-top:1px solid #2e2c29;padding:9px 14px;font-size:11px;font-family:DM Mono,monospace;line-height:1.7;flex-shrink:0;max-height:120px;overflow-y:auto';
+    const fmtRel = r => `<span style="color:var(--accent3)">${r.first}·${r.second}</span>`;
+    const I_html = d.relations_I.length
+      ? d.relations_I.map(fmtRel).join(', ')
+      : '<span style="color:var(--muted)">∅</span>';
+    const Ihat_html = d.relations_I_hat_minus_I.length
+      ? d.relations_I_hat_minus_I.map(fmtRel).join(', ')
+      : '<span style="color:var(--muted)">∅</span>';
+    rel.innerHTML = `
+      <div><span style="color:#d4a853;font-weight:600">I</span>:&nbsp; ${I_html}</div>
+      <div><span style="color:#ff5fa0;font-weight:600">Î \\ I</span>:&nbsp; ${Ihat_html}</div>
+      <div style="margin-top:5px;font-size:10px;color:#6a6560">
+        Fringe vertices have <span style="color:#e85a4a;font-weight:600">red frame</span>;
+        fringe arrows are drawn in <span style="color:#ff8fb8;font-weight:600">pink</span>.
+      </div>`;
+    c.appendChild(rel);
+    // Display structure: c is now flex column with bar | diagram | rel
+    c.style.display = 'flex';
+    c.style.flexDirection = 'column';
+    c.style.height = '100%';
+    drawFringedQuiver(diagram, d);
+    new ResizeObserver(()=>drawFringedQuiver(diagram, d)).observe(win);
+  }});
+}
+
+window._fringedAction = function(which){
+  const labels = {
+    indecomposables: 'Indecomposables of Â',
+    cohook: 'Cohook completion (BDMTY Def 3.6)',
+    kisses: 'Kisses (BDMTY)',
+    tbd: 'TBD'
+  };
+  alert(labels[which] + ' — coming soon. The fringed quiver Â is already constructed and visible above; this button will compute the indicated invariant of Â in a future update.');
+};
+
+function drawFringedQuiver(host, d){
+  // Re-use the generic drag-enabled graph drawer. We pre-compute positions so
+  // original vertices sit in a circle in the middle and each fringe vertex is
+  // placed just outside the original vertex it attaches to. Fringe arrows are
+  // styled with a thicker, dashed PINK stroke and an opaque pink arrowhead so
+  // they are visually distinct from the blue solid original arrows. The red
+  // node-frame for fringe vertices is conveyed by a different `color`.
+  const W = Math.max(300, host.clientWidth || host.parentElement?.clientWidth || 740);
+  const H = Math.max(300, host.clientHeight || 380);
+  const fringeSet = new Set(d.fringe_vertices);
+  const fringeArrowSet = new Set(d.fringe_arrow_labels);
+  const cx = W/2, cy = H/2;
+  const Ro = Math.min(W, H) * 0.22;
+  const Rf = Math.min(W, H) * 0.18;
+  const orig = d.original_vertices;
+  const positions = {};
+  orig.forEach((v, i) => {
+    const ang = (2*Math.PI*i / Math.max(orig.length, 1)) - Math.PI/2;
+    positions[v] = {x: cx + Ro*Math.cos(ang), y: cy + Ro*Math.sin(ang)};
+  });
+  // Each fringe vertex attaches to exactly one original vertex.
+  const fringeAttach = {};
+  for(const a of d.all_arrows){
+    if(fringeSet.has(a.from)) fringeAttach[a.from] = a.to;
+    if(fringeSet.has(a.to))   fringeAttach[a.to]   = a.from;
+  }
+  const fringePerOrig = {};
+  for(const f of d.fringe_vertices){
+    const o = fringeAttach[f];
+    if(!fringePerOrig[o]) fringePerOrig[o] = [];
+    fringePerOrig[o].push(f);
+  }
+  for(const [o, fs] of Object.entries(fringePerOrig)){
+    const baseAng = Math.atan2(positions[o].y - cy, positions[o].x - cx);
+    fs.forEach((f, k) => {
+      const off = (k - (fs.length-1)/2) * 0.55;
+      const ang = baseAng + off;
+      positions[f] = {x: positions[o].x + Rf*Math.cos(ang), y: positions[o].y + Rf*Math.sin(ang)};
+    });
+  }
+  // Build nodes (colour: red for fringe vertices, blue for original).
+  const nodes = d.all_vertices.map(v => ({
+    id: v,
+    label: v,
+    color: fringeSet.has(v) ? '#e85a4a' : '#4a90d4',
+    headerInfo: fringeSet.has(v) ? ('Fringe vertex: ' + v) : ('Original vertex: ' + v),
+  }));
+  // Build edges with distinct styling for fringe arrows.
+  const edges = d.all_arrows.map(a => {
+    const isFringe = fringeArrowSet.has(a.label);
+    return {
+      from: a.from, to: a.to,
+      label: a.label,
+      color: isFringe ? '#ff8fb8' : '#4a90d4',
+      thickness: isFringe ? 2.6 : 1.8,
+      style: isFringe ? 'dashed' : 'solid',
+      headerInfo: (isFringe ? 'Fringe arrow ' : 'Original arrow ')
+                  + a.label + ': ' + a.from + ' → ' + a.to,
+    };
+  });
+  drawGenericGraph(host, {nodes, edges}, {W, H, positions, NR: 18, directed: true});
+}
+
+
+function tileBarbell(){
+  tileSetBody(`<div class="rblock"><div class="rhead">Generalized Barbell B(m, t, n)</div><div class="rbody">
+    <div style="font-size:11px;color:var(--muted);line-height:1.7;margin-bottom:10px">
+      The generalised barbell <em>B(m, t, n)</em> consists of:<br>
+      · A <span style="color:var(--accent)">left cycle</span> on <em>m</em> vertices x<sub>1</sub>…x<sub>m</sub>
+        (m ≥ 1; for <em>m=1</em>, α<sub>1</sub> = α<sub>m</sub> is a self-loop at x<sub>1</sub>)<br>
+      · A <span style="color:var(--accent2)">connecting bar</span> of <em>t</em> edges β<sub>1</sub>,…,β<sub>t</sub>
+        (t ≥ 0; for <em>t=0</em> the hubs are identified, x<sub>1</sub> = z<sub>1</sub>)<br>
+      · A <span style="color:var(--accent)">right cycle</span> on <em>n</em> vertices z<sub>1</sub>…z<sub>n</sub>
+        (n ≥ 1; for <em>n=1</em>, γ<sub>1</sub> = γ<sub>n</sub> is a self-loop at z<sub>1</sub>)
+    </div>
+    <div style="padding:9px 12px;background:var(--surface);border:1px solid var(--border);border-radius:4px;font-size:11px;line-height:1.8;margin-bottom:12px">
+      <span style="color:var(--accent3)">α<sub>m</sub>·α<sub>1</sub> = <span class="false">0</span></span>
+      &nbsp;and&nbsp;
+      <span style="color:var(--accent3)">γ<sub>n</sub>·γ<sub>1</sub> = <span class="false">0</span></span>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+      <div><label>m (left cycle, ≥ 1)</label><input type="text" id="barbell-m" value="3" style="width:70px"></div>
+      <div><label>t (bar length, ≥ 0)</label><input type="text" id="barbell-t" value="3" style="width:70px"></div>
+      <div><label>n (right cycle, ≥ 1)</label><input type="text" id="barbell-n" value="3" style="width:70px"></div>
+    </div>
+    <button class="btn-run" onclick="openBarbellWindow()" style="width:100%;margin-bottom:8px">⊞ Draw B(m, t, n) in Resizable Window</button>
+    <div style="font-size:10px;color:var(--muted)">After drawing: <span style="color:var(--accent2)">drag</span> any vertex · <span style="color:var(--accent)">click</span> any dashed edge to toggle orientation · <span style="color:var(--accent)">click</span> any vertex/edge for its style menu · <span style="color:#ff9800">click</span> any arrow label to recolour it.</div>
+  </div></div>`);
+}
+
+function openBarbellWindow(){
+  const m=Math.max(1,Math.min(12,parseInt(document.getElementById('barbell-m').value)||3));
+  const t=Math.max(0,Math.min(12,parseInt(document.getElementById('barbell-t').value)||3));
+  const n=Math.max(1,Math.min(12,parseInt(document.getElementById('barbell-n').value)||3));
+  const edgeOrient={};
+  popoutWindow({title:`Generalized Barbell B(${m}, ${t}, ${n})`,w:680,h:520,render:(c,{window:win})=>{
+    const wrap=document.createElement('div');wrap.style.cssText='width:100%;height:480px;position:relative';
+    c.appendChild(wrap);
+    drawBarbellSVG(wrap,m,t,n,edgeOrient);
+    new ResizeObserver(()=>drawBarbellSVG(wrap,m,t,n,edgeOrient)).observe(win);
+  }});
+}
+
+function drawBarbellSVG(container,m,t,n,edgeOrient){
+  container.innerHTML='';
+  const W=container.clientWidth||660, H=container.clientHeight||460, CY=H/2;
+  const NS='http://www.w3.org/2000/svg';
+  const PAD = 40;
+
+  // ── Layout planner ───────────────────────────────────────────────────────
+  //  t=0  : x_1 ≡ z_1 (single shared hub). Left cycle drawn to the LEFT of
+  //         the hub; right cycle drawn to the RIGHT of the hub.
+  //  t>=1 : two distinct hubs at LCX and RCX, joined by a bar of t edges.
+  //
+  // We choose circle radii R_L, R_R, and bar length so the whole diagram
+  // fits inside (W - 2*PAD) horizontally and (H - 2*PAD) vertically.
+  const NR = 18;
+  const maxR_v = (H - 2*PAD) / 2 - 4;   // vertical clearance for any cycle
+  let R_L, R_R, LCX, RCX, BAR_L, BAR_R, HUB_X;
+  const avail = W - 2*PAD;
+  if (t === 0) {
+    // Single shared hub at the centre.
+    HUB_X = W / 2;
+    const r = Math.min(maxR_v, (avail - 2*NR) / 4);
+    R_L = R_R = Math.max(40, r);
+    LCX = HUB_X - R_L;   // centre of left cycle (its rightmost point sits at HUB_X)
+    RCX = HUB_X + R_R;   // centre of right cycle (its leftmost point sits at HUB_X)
+    BAR_L = BAR_R = HUB_X;
+  } else {
+    // Two hubs separated by the bar.
+    //  bar length:  proportional to t, with sensible min and max
+    const bar = Math.max(60, Math.min(avail*0.4, 50*t));
+    const remaining = avail - bar;
+    const r = Math.min(maxR_v, remaining/4);
+    R_L = R_R = Math.max(40, r);
+    LCX = PAD + R_L;
+    RCX = W - PAD - R_R;
+    BAR_L = LCX + R_L;
+    BAR_R = RCX - R_R;
+  }
+  const mk=(tag,a={})=>{const e=document.createElementNS(NS,tag);Object.entries(a).forEach(([k,v])=>e.setAttribute(k,v));return e;};
+  function subTxt(parent,letter,sub,x,y,col,fs){
+    const t2=mk('text',{x,y,'text-anchor':'middle','dominant-baseline':'central',style:`fill:${col};font-size:${fs}px;font-family:Georgia,serif;font-style:italic`});
+    t2.textContent=letter;
+    if(sub){const ts=mk('tspan',{dy:`${fs*0.35}px`,'font-size':`${fs*0.72}px`,'font-style':'normal'});ts.textContent=sub;t2.appendChild(ts);}
+    parent.appendChild(t2);return t2;
+  }
+  const svg=mk('svg',{width:W,height:H,style:'display:block'});
+  const defs=mk('defs');
+  [['bb-gold','#d4a853'],['bb-teal','#7eb8a4'],['bb-orange','#ff9800']].forEach(([id,col])=>{
+    const m2=mk('marker',{id,markerWidth:'9',markerHeight:'7',refX:'8',refY:'3.5',orient:'auto'});
+    const p=mk('polygon',{points:'0 0,9 3.5,0 7',fill:col,opacity:'.9'});m2.appendChild(p);defs.appendChild(m2);
+  });
+  svg.appendChild(defs);
+  const pos={};
+  // ── Left hub x_1 (also the shared hub when t=0) ────────────────────────
+  // Its DISPLAYED x-coordinate is the rightmost point of the left cycle.
+  const xHubX = (t===0) ? HUB_X : (LCX + R_L);
+  pos['x1'] = {x: xHubX, y: CY, label:'x', sub: (t===0 ? '1=z₁' : '1'), hub:true};
+  // Place x_2..x_m on the left cycle, evenly spaced counter-clockwise from x_1.
+  // For m=2 we just place x_2 diametrically opposite x_1.
+  if (m === 2) {
+    pos['x2'] = {x: LCX - R_L, y: CY, label:'x', sub:'m'};
+  } else if (m >= 3) {
+    for (let i = 2; i <= m; i++) {
+      const ang = (i-1) * (2*Math.PI/m);
+      pos[`x${i}`] = {
+        x: LCX + R_L * Math.cos(ang),
+        y: CY  - R_L * Math.sin(ang),
+        label:'x', sub: (i===m ? 'm' : String(i)),
+      };
+    }
+  }
+  // ── Bar intermediates y_2..y_{t}  (t-1 of them, only when t>=2) ────────
+  if (t >= 2) {
+    const interN = t - 1;
+    for (let i = 0; i < interN; i++) {
+      const f = (i+1) / (interN+1);
+      pos[`y${i+2}`] = {
+        x: BAR_L + (BAR_R - BAR_L) * f,
+        y: CY,
+        label:'y',
+        sub: (interN === 1 ? '2' : (i === 0 ? '2' : i === interN-1 ? 't−1' : String(i+2))),
+      };
+    }
+  }
+  // ── Right hub z_1 (only when t>=1; when t=0 it's identified with x_1) ─
+  if (t !== 0) {
+    const zHubX = RCX - R_R;
+    pos['z1'] = {x: zHubX, y: CY, label:'z', sub:'1', hub:true};
+    if (n === 2) {
+      pos['z2'] = {x: RCX + R_R, y: CY, label:'z', sub:'n'};
+    } else if (n >= 3) {
+      for (let i = 2; i <= n; i++) {
+        // Mirror of left cycle: z_1 at angle π (leftmost), then clockwise.
+        const ang = Math.PI - (i-1) * (2*Math.PI/n);
+        pos[`z${i}`] = {
+          x: RCX + R_R * Math.cos(ang),
+          y: CY  - R_R * Math.sin(ang),
+          label:'z', sub: (i===n ? 'n' : String(i)),
+        };
+      }
+    }
+  }
+  const edges=[];
+  if(m===1){
+    edges.push({id:'a1',from:'x1',to:'x1',type:'oriented',label:'α',sub:'1=m',isLoop:true,loopSide:'left'});
+  } else if(m===2){
+    edges.push({id:'a1',from:'x1',to:'x2',type:'oriented',label:'α',sub:'1'});
+    edges.push({id:'am',from:'x2',to:'x1',type:'oriented',label:'α',sub:'m'});
+  } else {
+    edges.push({id:'a1',from:'x1',to:'x2',type:'oriented',label:'α',sub:'1'});
+    for(let i=2;i<=m-1;i++){
+      edges.push({id:`a${i}`,from:`x${i}`,to:i===m-1?`x${m}`:`x${i+1}`,type:'dashed',label:'α',sub:i===m-1?'m−1':String(i)});
+    }
+    edges.push({id:'am',from:`x${m}`,to:'x1',type:'oriented',label:'α',sub:'m'});
+  }
+  if(t===1){
+    edges.push({id:'b1',from:'x1',to:'z1',type:'dashed',label:'β',sub:'1'});
+  } else if(t>=2){
+    const ps=['x1',...Array.from({length:t-1},(_,i)=>`y${i+2}`),'z1'];
+    for(let i=0;i<ps.length-1;i++){
+      edges.push({id:`b${i+1}`,from:ps[i],to:ps[i+1],type:'dashed',label:'β',sub:i===0?'1':(i===ps.length-2?'t−1':String(i+1))});
+    }
+  }
+  const rhubKey=(t===0)?'x1':'z1';
+  if(n===1){
+    edges.push({id:'gn',from:rhubKey,to:rhubKey,type:'oriented',label:'γ',sub:'1=n',isLoop:true,loopSide:'right'});
+  } else if(n===2){
+    edges.push({id:'g1',from:rhubKey,to:'z2',type:'oriented',label:'γ',sub:'1'});
+    edges.push({id:'gn',from:'z2',to:rhubKey,type:'oriented',label:'γ',sub:'n'});
+  } else {
+    edges.push({id:'g1',from:rhubKey,to:'z2',type:'oriented',label:'γ',sub:'1'});
+    for(let i=2;i<=n-1;i++){
+      edges.push({id:`g${i}`,from:`z${i}`,to:i===n-1?`z${n}`:`z${i+1}`,type:'dashed',label:'γ',sub:i===n-1?'n−1':String(i)});
+    }
+    edges.push({id:'gn',from:`z${n}`,to:rhubKey,type:'oriented',label:'γ',sub:'n'});
+  }
+  const edgeLayer=mk('g');svg.appendChild(edgeLayer);
+  const nodeLayer=mk('g');svg.appendChild(nodeLayer);
+  let dragged=null,startPt={x:0,y:0},nodeStart={x:0,y:0};
+  function ptSVG(e){const ctm=svg.getScreenCTM();return{x:(e.clientX-ctm.e)/ctm.a,y:(e.clientY-ctm.f)/ctm.d};}
+  svg.addEventListener('mousemove',e=>{if(!dragged)return;const p=ptSVG(e);pos[dragged].x=Math.max(NR,Math.min(W-NR,nodeStart.x+(p.x-startPt.x)));pos[dragged].y=Math.max(NR,Math.min(H-NR,nodeStart.y+(p.y-startPt.y)));redraw();});
+  svg.addEventListener('mouseup',()=>{dragged=null;svg.style.cursor='';});
+  function perp(x1,y1,x2,y2,d=14){const dx=x2-x1,dy=y2-y1,len=Math.sqrt(dx*dx+dy*dy)||1;return{x:(x1+x2)/2+(-dy/len)*d,y:(y1+y2)/2+(dx/len)*d};}
+  const edgeAttr={};edges.forEach(e=>{edgeAttr[e.id]={color:null,thickness:2,style:null,label:e.label,sub:e.sub,labelColor:null,isLoop:!!e.isLoop,loopSide:e.loopSide||'left'};});
+  const nodeAttr={};Object.keys(pos).forEach(k=>{nodeAttr[k]={color:null,label:pos[k].label,sub:pos[k].sub};});
+  function pickLabelColor(strokeCol){
+    if(strokeCol==='#d4a853') return '#ff5fa0';
+    if(strokeCol==='#7eb8a4') return '#ff9800';
+    if(strokeCol==='#ff9800') return '#7eb8a4';
+    return '#ff5fa0';
+  }
+  function redraw(){
+    edgeLayer.innerHTML='';nodeLayer.innerHTML='';
+    edges.forEach(edge=>{
+      const p1=pos[edge.from],p2=pos[edge.to];if(!p1||!p2)return;
+      const a=edgeAttr[edge.id];
+      const isOri=edge.type==='oriented';
+      const orient=edgeOrient[edge.id];
+      let color=a.color||(isOri?'#d4a853':'#7eb8a4'),dashArr='none',markerEnd=null,markerStart=null,sw=a.thickness;
+      if(a.style==='dashed')dashArr='6,3';else if(a.style==='dotted')dashArr='2,3';
+      function markerFor(col){if(col==='#d4a853')return 'url(#bb-gold)';if(col==='#7eb8a4')return 'url(#bb-teal)';if(col==='#ff9800')return 'url(#bb-orange)';return 'url(#bb-gold)';}
+      const labelCol=a.labelColor||pickLabelColor(color);
+      if(a.isLoop){
+        const r0=pos[edge.from].hub?NR*1.3:NR;
+        const dir=a.loopSide==='right'?1:-1;
+        // Pick the cycle radius matching the side of the loop
+        const Rside = (a.loopSide==='right') ? R_R : R_L;
+        const cx=p1.x+dir*(r0+Rside*0.6), cy=p1.y;
+        const rl=Rside*0.55, ang=0.4;
+        const sx=p1.x+dir*r0*Math.cos(ang), sy=p1.y-r0*Math.sin(ang);
+        const ex=p1.x+dir*r0*Math.cos(ang), ey=p1.y+r0*Math.sin(ang);
+        const path=mk('path',{
+          d:`M ${sx} ${sy} A ${rl} ${rl} 0 1 ${dir>0?0:1} ${ex} ${ey}`,
+          stroke:color, fill:'none', 'stroke-width':sw, 'stroke-dasharray':dashArr,
+          'marker-end':markerFor(color), style:'cursor:pointer'
+        });
+        path.addEventListener('click',ev=>{ev.stopPropagation();openEdgePopover(ev,edge,a);});
+        edgeLayer.appendChild(path);
+        const lblTxt=subTxt(edgeLayer,a.label,a.sub,cx+dir*rl*0.7,cy,labelCol,Math.max(10,NR*0.7));
+        lblTxt.style.cursor='pointer';
+        lblTxt.addEventListener('click',ev=>{ev.stopPropagation();showColorPicker(ev.clientX,ev.clientY,(c)=>{a.labelColor=c||null;redraw();},true);});
+        return;
+      }
+      const dx=p2.x-p1.x,dy=p2.y-p1.y,d=Math.sqrt(dx*dx+dy*dy)||1;
+      const ux=dx/d,uy=dy/d;
+      const r1=pos[edge.from].hub?NR*1.3:NR,r2=pos[edge.to].hub?NR*1.3:NR;
+      const sx=p1.x+ux*r1,sy=p1.y+uy*r1,ex=p2.x-ux*(r2+5),ey=p2.y-uy*(r2+5);
+      if(isOri){markerEnd=markerFor(color);}
+      else if(orient==='fwd'){markerEnd=markerFor(color);dashArr='none';color=a.color||'#7eb8a4';}
+      else if(orient==='rev'){markerStart=markerFor(color);dashArr='none';}
+      else if(!a.style){dashArr='5,3';}
+      if(!isOri){
+        const hit=mk('line',{x1:sx,y1:sy,x2:ex,y2:ey,stroke:'transparent','stroke-width':18,style:'cursor:pointer'});
+        hit.addEventListener('click',ev=>{ev.stopPropagation();if(ev.shiftKey){openEdgePopover(ev,edge,a);return;}const cur=edgeOrient[edge.id]||null;edgeOrient[edge.id]=cur===null?'fwd':cur==='fwd'?'rev':null;redraw();});
+        hit.addEventListener('contextmenu',ev=>{ev.preventDefault();openEdgePopover(ev,edge,a);});
+        edgeLayer.appendChild(hit);
+      } else {
+        const hit=mk('line',{x1:sx,y1:sy,x2:ex,y2:ey,stroke:'transparent','stroke-width':18,style:'cursor:pointer'});
+        hit.addEventListener('click',ev=>{ev.stopPropagation();openEdgePopover(ev,edge,a);});
+        edgeLayer.appendChild(hit);
+      }
+      let line;
+      if(orient==='rev'&&!isOri){
+        line=mk('line',{x1:ex,y1:ey,x2:sx,y2:sy,stroke:color,'stroke-width':sw,'stroke-dasharray':dashArr,'marker-end':markerFor(color)});
+      } else {
+        const attrs={x1:sx,y1:sy,x2:ex,y2:ey,stroke:color,'stroke-width':sw,'stroke-dasharray':dashArr};
+        if(markerEnd)attrs['marker-end']=markerEnd;if(markerStart)attrs['marker-start']=markerStart;
+        line=mk('line',attrs);
+      }
+      edgeLayer.appendChild(line);
+      const lp=perp(sx,sy,ex,ey,14);
+      const lblTxt=subTxt(edgeLayer,a.label,a.sub,lp.x,lp.y,labelCol,Math.max(9,NR*0.65));
+      lblTxt.style.cursor='pointer';
+      lblTxt.addEventListener('click',ev=>{ev.stopPropagation();showColorPicker(ev.clientX,ev.clientY,(c)=>{a.labelColor=c||null;redraw();},true);});
+    });
+    Object.entries(pos).forEach(([key,p])=>{
+      const a=nodeAttr[key];const isHub=p.hub;const nodeR=isHub?NR*1.3:NR;
+      const col=a.color||'#4a90d4';
+      const g=mk('g',{style:'cursor:grab'});
+      const c=mk('circle',{cx:p.x,cy:p.y,r:nodeR,fill:col+'22',stroke:col,'stroke-width':isHub?'3.5':'2'});
+      const fs=Math.max(10,nodeR*0.65);
+      subTxt(g,a.label,a.sub,p.x,p.y-1,'#e8e4dc',fs);
+      g.insertBefore(c,g.firstChild);
+      let didDrag=false;
+      g.addEventListener('mousedown',ev=>{ev.stopPropagation();ev.preventDefault();didDrag=false;dragged=key;startPt=ptSVG(ev);nodeStart={x:p.x,y:p.y};svg.style.cursor='grabbing';});
+      svg.addEventListener('mousemove',()=>{if(dragged===key)didDrag=true;});
+      g.addEventListener('mouseup',ev=>{
+        if(!didDrag){
+          svgEditPopover(ev,{type:'vertex',name:a.label+(a.sub?'_'+a.sub:''),color:a.color},(out)=>{
+            if(out.color!==undefined)a.color=out.color;
+            if(out.name){const m=/^([^_]+)(?:_(.+))?$/.exec(out.name);if(m){a.label=m[1];a.sub=m[2]||'';}}
+            redraw();
+          },'Vertex: '+a.label+(a.sub?'<sub>'+a.sub+'</sub>':''));
+        }
+        dragged=null;svg.style.cursor='';
+      });
+      nodeLayer.appendChild(g);
+    });
+  }
+  function openEdgePopover(ev,edge,a){
+    svgEditPopover(ev,{type:'edge',name:a.label+(a.sub?'_'+a.sub:''),color:a.color,thickness:a.thickness,style:a.style||'dashed'},(out)=>{
+      if(out.color!==undefined)a.color=out.color;a.thickness=out.thickness;a.style=out.style;
+      if(out.name){const m=/^([^_]+)(?:_(.+))?$/.exec(out.name);if(m){a.label=m[1];a.sub=m[2]||'';}}
+      redraw();
+    },'Edge: '+a.label+(a.sub?'<sub>'+a.sub+'</sub>':'')+' ('+edge.from+' → '+edge.to+')');
+  }
+  redraw();
+  container.appendChild(svg);
+}
+
+// ── First render: empty quiver, empty results
+render();
+</script>
+</body>
+</html>

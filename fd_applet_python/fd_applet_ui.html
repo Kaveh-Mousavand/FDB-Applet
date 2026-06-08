@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>fd-applet — Finite Dimensional Algebra Explorer</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,400;0,500;1,400&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;1,9..144,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f0e0c;
+    --surface: #1a1916;
+    --surface2: #242220;
+    --border: #333;
+    --accent: #d4a853;
+    --accent2: #7eb8a4;
+    --text: #e8e4dc;
+    --muted: #7a7570;
+    --error: #c96b5a;
+    --success: #7eb8a4;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: 380px 1fr;
+    grid-template-rows: auto 1fr;
+  }
+
+  header {
+    grid-column: 1 / -1;
+    padding: 24px 36px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: baseline;
+    gap: 20px;
+  }
+
+  h1 {
+    font-family: 'Fraunces', serif;
+    font-size: 26px;
+    font-weight: 300;
+    color: var(--accent);
+    letter-spacing: -0.5px;
+  }
+
+  .subtitle {
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+  }
+
+  /* ── Left panel ── */
+  .panel-left {
+    border-right: 1px solid var(--border);
+    padding: 28px 24px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+  }
+
+  .section-title {
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 14px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  label {
+    font-size: 11px;
+    color: var(--muted);
+    display: block;
+    margin-bottom: 5px;
+    letter-spacing: 0.5px;
+  }
+
+  input, textarea {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    padding: 9px 12px;
+    border-radius: 4px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  input:focus, textarea:focus {
+    border-color: var(--accent);
+  }
+
+  textarea { resize: vertical; min-height: 60px; }
+
+  .field { margin-bottom: 14px; }
+
+  .hint {
+    font-size: 10px;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+
+  /* Arrow list */
+  .arrow-list { display: flex; flex-direction: column; gap: 8px; }
+
+  .arrow-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr auto;
+    gap: 6px;
+    align-items: center;
+  }
+
+  .arrow-row input { padding: 7px 8px; font-size: 12px; }
+
+  .btn-icon {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    width: 30px; height: 30px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s;
+    flex-shrink: 0;
+  }
+  .btn-icon:hover { border-color: var(--error); color: var(--error); }
+
+  .btn-add {
+    background: none;
+    border: 1px dashed var(--border);
+    color: var(--muted);
+    width: 100%;
+    padding: 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 1px;
+    transition: all 0.15s;
+    margin-top: 6px;
+  }
+  .btn-add:hover { border-color: var(--accent2); color: var(--accent2); }
+
+  /* Relation list */
+  .rel-list { display: flex; flex-direction: column; gap: 8px; }
+  .rel-row { display: grid; grid-template-columns: 1fr auto; gap: 6px; align-items: center; }
+  .rel-row input { font-size: 12px; }
+
+  .bi-row { display: grid; grid-template-columns: 1fr auto 1fr auto; gap: 6px; align-items: center; }
+  .bi-row input { font-size: 12px; }
+  .eq-sign { color: var(--accent); font-size: 14px; text-align: center; }
+
+  /* Run button */
+  .btn-run {
+    background: var(--accent);
+    color: #0f0e0c;
+    border: none;
+    padding: 13px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    width: 100%;
+    transition: opacity 0.15s, transform 0.1s;
+  }
+  .btn-run:hover { opacity: 0.88; }
+  .btn-run:active { transform: scale(0.98); }
+  .btn-run:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* ── Right panel ── */
+  .panel-right {
+    padding: 28px 32px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .compute-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .btn-compute {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 8px 14px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.5px;
+    transition: all 0.15s;
+  }
+  .btn-compute:hover { border-color: var(--accent2); color: var(--accent2); }
+  .btn-compute:disabled { opacity: 0.35; cursor: not-allowed; }
+
+  /* Results */
+  .result-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+    animation: fadeIn 0.25s ease;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .result-card-header {
+    padding: 10px 16px;
+    background: var(--surface2);
+    border-bottom: 1px solid var(--border);
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--accent);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .result-card-body { padding: 16px; }
+
+  .kv-grid {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 6px 20px;
+    font-size: 13px;
+  }
+  .kv-key { color: var(--muted); }
+  .kv-val { color: var(--text); }
+  .kv-val.good { color: var(--success); }
+  .kv-val.warn { color: var(--accent); }
+
+  .pill-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .pill {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 3px 10px;
+    font-size: 12px;
+    color: var(--text);
+  }
+  .pill.proj { border-color: var(--accent); color: var(--accent); }
+  .pill.inj  { border-color: var(--accent2); color: var(--accent2); }
+  .pill.both { border-color: #9f8fda; color: #9f8fda; }
+
+  .module-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+  }
+  .module-table th {
+    text-align: left;
+    padding: 6px 10px;
+    color: var(--muted);
+    font-weight: 400;
+    font-size: 10px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--border);
+  }
+  .module-table td {
+    padding: 6px 10px;
+    border-bottom: 1px solid #222;
+    vertical-align: middle;
+  }
+  .module-table tr:last-child td { border-bottom: none; }
+  .module-table tr:hover td { background: var(--surface2); }
+
+  .tag {
+    display: inline-block;
+    font-size: 9px;
+    padding: 1px 5px;
+    border-radius: 2px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    margin-left: 4px;
+  }
+  .tag-p { background: #3a2e10; color: var(--accent); }
+  .tag-i { background: #0e2e28; color: var(--accent2); }
+
+  .status-bar {
+    font-size: 12px;
+    color: var(--muted);
+    padding: 8px 0;
+    border-top: 1px solid var(--border);
+    margin-top: auto;
+  }
+
+  .err { color: var(--error); font-size: 12px; }
+
+  /* Hom calculator */
+  .hom-row {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr auto;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+  .hom-label { color: var(--muted); font-size: 12px; text-align: center; }
+
+  .empty-state {
+    color: var(--muted);
+    font-size: 13px;
+    text-align: center;
+    padding: 60px 20px;
+    line-height: 2;
+  }
+
+  .spinner {
+    display: inline-block;
+    width: 12px; height: 12px;
+    border: 2px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    vertical-align: middle;
+    margin-right: 6px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>fd-applet</h1>
+  <span class="subtitle">Finite Dimensional Algebra Explorer</span>
+</header>
+
+<!-- LEFT PANEL: Input form -->
+<div class="panel-left">
+
+  <!-- Vertices -->
+  <div>
+    <div class="section-title">Vertices</div>
+    <div class="field">
+      <label>Vertex labels (comma separated)</label>
+      <input type="text" id="vertices" placeholder="1, 2, 3, 4" value="1, 2, 3, 4">
+      <div class="hint">e.g. 1, 2, 3  or  a, b, c</div>
+    </div>
+  </div>
+
+  <!-- Arrows -->
+  <div>
+    <div class="section-title">Arrows</div>
+    <div class="arrow-list" id="arrow-list"></div>
+    <button class="btn-add" onclick="addArrow()">+ Add arrow</button>
+  </div>
+
+  <!-- Monomial relations -->
+  <div>
+    <div class="section-title">Zero relations (monomial)</div>
+    <div class="rel-list" id="mono-list"></div>
+    <button class="btn-add" onclick="addMono()">+ Add zero relation</button>
+    <div class="hint" style="margin-top:8px">Enter arrow labels separated by spaces, e.g. <em>a b c</em> means ab=0</div>
+  </div>
+
+  <!-- Commutativity relations -->
+  <div>
+    <div class="section-title">Commutativity relations</div>
+    <div class="rel-list" id="bi-list"></div>
+    <button class="btn-add" onclick="addBi()">+ Add commutativity</button>
+    <div class="hint" style="margin-top:8px">e.g. <em>a b</em> = <em>c d</em> means ab = cd</div>
+  </div>
+
+  <!-- Load button -->
+  <button class="btn-run" id="btn-load" onclick="loadAlgebra()">
+    Load Algebra
+  </button>
+
+  <div id="load-status" class="status-bar"></div>
+</div>
+
+<!-- RIGHT PANEL: Results -->
+<div class="panel-right">
+
+  <div class="compute-bar" id="compute-bar">
+    <button class="btn-compute" disabled onclick="runInfo()">Algebra Info</button>
+    <button class="btn-compute" disabled onclick="runIndecs()">Indecomposables</button>
+    <button class="btn-compute" disabled onclick="runProjs()">Projectives</button>
+    <button class="btn-compute" disabled onclick="runInjs()">Injectives</button>
+    <button class="btn-compute" disabled onclick="runSimples()">Simples</button>
+    <button class="btn-compute" disabled onclick="runDims()">Dimensions</button>
+    <button class="btn-compute" disabled onclick="runBands()">Bands</button>
+    <button class="btn-compute" disabled onclick="showHomCalc()">Hom Calculator</button>
+  </div>
+
+  <div id="results">
+    <div class="empty-state">
+      Fill in the quiver on the left<br>and click <strong>Load Algebra</strong><br>to begin.
+    </div>
+  </div>
+
+</div>
+
+<script>
+const API = 'http://localhost:8000';
+let loaded = false;
+let allModules = [];
+
+// ── Arrow rows ────────────────────────────────────────────────────────────────
+let arrowCount = 0;
+function addArrow(label='', from='', to='') {
+  arrowCount++;
+  const id = arrowCount;
+  const row = document.createElement('div');
+  row.className = 'arrow-row';
+  row.id = `ar-${id}`;
+  row.innerHTML = `
+    <input type="text" placeholder="label" value="${label}" title="Arrow label">
+    <input type="text" placeholder="from" value="${from}" title="Source vertex">
+    <input type="text" placeholder="to"   value="${to}"   title="Target vertex">
+    <button class="btn-icon" onclick="document.getElementById('ar-${id}').remove()" title="Remove">×</button>
+  `;
+  document.getElementById('arrow-list').appendChild(row);
+}
+
+function getArrows() {
+  const rows = document.querySelectorAll('.arrow-row');
+  const result = [];
+  rows.forEach(row => {
+    const [lbl, frm, to] = row.querySelectorAll('input');
+    if (lbl.value.trim()) {
+      result.push({ label: lbl.value.trim(), from: frm.value.trim(), to: to.value.trim() });
+    }
+  });
+  return result;
+}
+
+// ── Mono relation rows ────────────────────────────────────────────────────────
+let monoCount = 0;
+function addMono(val='') {
+  monoCount++;
+  const id = monoCount;
+  const row = document.createElement('div');
+  row.className = 'rel-row';
+  row.id = `mono-${id}`;
+  row.innerHTML = `
+    <input type="text" placeholder="a b c  (means abc = 0)" value="${val}">
+    <button class="btn-icon" onclick="document.getElementById('mono-${id}').remove()" title="Remove">×</button>
+  `;
+  document.getElementById('mono-list').appendChild(row);
+}
+
+function getMonos() {
+  const rows = document.querySelectorAll('#mono-list .rel-row input');
+  return Array.from(rows)
+    .map(i => i.value.trim().split(/\s+/).filter(Boolean))
+    .filter(r => r.length >= 2);
+}
+
+// ── Bi relation rows ──────────────────────────────────────────────────────────
+let biCount = 0;
+function addBi(left='', right='') {
+  biCount++;
+  const id = biCount;
+  const row = document.createElement('div');
+  row.className = 'bi-row';
+  row.id = `bi-${id}`;
+  row.innerHTML = `
+    <input type="text" placeholder="a b" value="${left}">
+    <span class="eq-sign">=</span>
+    <input type="text" placeholder="c d" value="${right}">
+    <button class="btn-icon" onclick="document.getElementById('bi-${id}').remove()" title="Remove">×</button>
+  `;
+  document.getElementById('bi-list').appendChild(row);
+}
+
+function getBis() {
+  const rows = document.querySelectorAll('#bi-list .bi-row');
+  return Array.from(rows).map(row => {
+    const inputs = row.querySelectorAll('input');
+    return {
+      first:  inputs[0].value.trim().split(/\s+/).filter(Boolean),
+      second: inputs[1].value.trim().split(/\s+/).filter(Boolean)
+    };
+  }).filter(r => r.first.length >= 2 && r.second.length >= 2);
+}
+
+// ── Load algebra ──────────────────────────────────────────────────────────────
+async function loadAlgebra() {
+  const vertices = document.getElementById('vertices').value
+    .split(',').map(v => v.trim()).filter(Boolean);
+  const arrows  = getArrows();
+  const monos   = getMonos();
+  const bis     = getBis();
+
+  const body = {
+    quiver: { vertices, arrows },
+    monoRelations: monos,
+    biRelations: bis
+  };
+
+  setStatus('loading', 'Loading algebra...');
+  document.getElementById('btn-load').disabled = true;
+
+  try {
+    const res = await fetch(`${API}/algebra`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || 'Unknown error');
+
+    loaded = true;
+    allModules = [];
+    enableButtons(true);
+    setStatus('ok', `✓ Loaded as ${data.loaded} — vertices: ${data.vertices.join(', ')}`);
+    setResults(`<div class="empty-state">Algebra loaded!<br>Click a button above to compute.</div>`);
+  } catch(e) {
+    setStatus('err', '✗ ' + e.message);
+  } finally {
+    document.getElementById('btn-load').disabled = false;
+  }
+}
+
+// ── Compute buttons ───────────────────────────────────────────────────────────
+async function runInfo() {
+  const data = await apiFetch('/algebra/info');
+  if (!data) return;
+  showCard('Algebra Info', `
+    <div class="kv-grid">
+      <span class="kv-key">Type</span>       <span class="kv-val">${data.type}</span>
+      <span class="kv-key">Vertices</span>   <span class="kv-val">${data.vertices.join(', ')}</span>
+      <span class="kv-key">Arrows</span>     <span class="kv-val">${data.num_arrows}</span>
+      <span class="kv-key">Finite dim</span> <span class="kv-val ${data.is_finite_dimensional ? 'good':'warn'}">${data.is_finite_dimensional}</span>
+      <span class="kv-key">Dimension</span>  <span class="kv-val">${data.dimension ?? '∞'}</span>
+      <span class="kv-key">String alg</span> <span class="kv-val">${data.is_string}</span>
+      <span class="kv-key">Gentle alg</span> <span class="kv-val">${data.is_gentle}</span>
+      <span class="kv-key">Rep-finite</span> <span class="kv-val ${data.is_rep_finite ? 'good':'warn'}">${data.is_rep_finite ?? 'N/A'}</span>
+      <span class="kv-key"># Indecs</span>   <span class="kv-val">${data.num_indecs ?? 'N/A'}</span>
+    </div>
+  `);
+}
+
+async function runDims() {
+  const data = await apiFetch('/algebra/dimensions');
+  if (!data) return;
+  const fmt = v => v === null ? '∞' : v;
+  showCard('Dimensions', `
+    <div class="kv-grid">
+      <span class="kv-key">Global dim</span>        <span class="kv-val">${fmt(data.global_dim)}</span>
+      <span class="kv-key">Finitistic dim</span>    <span class="kv-val">${fmt(data.finitistic_dim)}</span>
+      <span class="kv-key">Right self-inj dim</span><span class="kv-val">${fmt(data.right_self_inj_dim)}</span>
+      <span class="kv-key">Left self-inj dim</span> <span class="kv-val">${fmt(data.left_self_inj_dim)}</span>
+      <span class="kv-key">Dominant dim</span>      <span class="kv-val">${fmt(data.dominant_dim)}</span>
+      <span class="kv-key">Iwanaga-Gorenstein</span><span class="kv-val ${data.is_ig?'good':''}">${data.is_ig}</span>
+      <span class="kv-key">Self-injective</span>    <span class="kv-val ${data.is_self_injective?'good':''}">${data.is_self_injective}</span>
+    </div>
+  `);
+}
+
+async function runIndecs() {
+  const data = await apiFetch('/modules/indecs');
+  if (!data) return;
+  allModules = data.map(m => m.name);
+  showModuleTable('Indecomposable Modules', data);
+}
+
+async function runProjs() {
+  const data = await apiFetch('/modules/projectives');
+  if (!data) return;
+  showModuleTable('Projective Indecomposables', data);
+}
+
+async function runInjs() {
+  const data = await apiFetch('/modules/injectives');
+  if (!data) return;
+  showModuleTable('Injective Indecomposables', data);
+}
+
+async function runSimples() {
+  const data = await apiFetch('/modules/simples');
+  if (!data) return;
+  showModuleTable('Simple Modules', data);
+}
+
+async function runBands() {
+  const data = await apiFetch('/modules/bands');
+  if (!data) return;
+  if (data.length === 0) {
+    showCard('Primitive Bands', '<div class="empty-state" style="padding:20px">No primitive bands (algebra is representation-finite or has no bands).</div>');
+    return;
+  }
+  showCard('Primitive Bands', `
+    <div class="pill-list">
+      ${data.map(b => `<span class="pill">${b.name} <span style="color:var(--muted)">(len ${b.length})</span></span>`).join('')}
+    </div>
+  `);
+}
+
+function showHomCalc() {
+  const opts = allModules.length > 0
+    ? allModules.map(m => `<option value="${m}">${m}</option>`).join('')
+    : '<option value="">— load indecs first —</option>';
+  setResults(`
+    <div class="result-card">
+      <div class="result-card-header">Hom / Ext Calculator</div>
+      <div class="result-card-body">
+        <div class="hom-row">
+          <div>
+            <label>Module X</label>
+            <input type="text" id="hom-x" placeholder="e.g. a*b" list="mod-list">
+          </div>
+          <span class="hom-label">→</span>
+          <div>
+            <label>Module Y</label>
+            <input type="text" id="hom-y" placeholder="e.g. c" list="mod-list">
+          </div>
+          <button class="btn-run" style="width:auto;padding:10px 16px;margin-top:16px" onclick="runHom()">Compute</button>
+        </div>
+        <datalist id="mod-list">${opts}</datalist>
+        <div id="hom-result"></div>
+        <div class="hint">Use * between arrows, e.g. <em>a*b*c</em>. Use ! for inverse, e.g. <em>!a</em>.</div>
+      </div>
+    </div>
+  `);
+}
+
+async function runHom() {
+  const x = document.getElementById('hom-x').value.trim();
+  const y = document.getElementById('hom-y').value.trim();
+  if (!x || !y) return;
+  const url = `/calculator/hom?x=${encodeURIComponent(x)}&y=${encodeURIComponent(y)}&compute_ext1=true&compute_stable=true`;
+  const data = await apiFetch(url);
+  if (!data) return;
+  document.getElementById('hom-result').innerHTML = `
+    <div class="kv-grid" style="margin-top:16px">
+      <span class="kv-key">dim Hom(${x}, ${y})</span>       <span class="kv-val good">${data.hom}</span>
+      <span class="kv-key">dim Ext¹(${x}, ${y})</span>      <span class="kv-val">${data.ext1 ?? 'N/A'}</span>
+      <span class="kv-key">dim Hom̲(${x}, ${y})</span>      <span class="kv-val">${data.stable_hom ?? 'N/A'}</span>
+    </div>
+  `;
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function showModuleTable(title, modules) {
+  const rows = modules.map(m => {
+    const isP = m.is_projective, isI = m.is_injective;
+    const tag = isP && isI ? '<span class="tag tag-p">P</span><span class="tag tag-i">I</span>'
+              : isP ? '<span class="tag tag-p">P</span>'
+              : isI ? '<span class="tag tag-i">I</span>' : '';
+    const pd = m.proj_dim === null ? '∞' : (m.proj_dim ?? '—');
+    const id = m.inj_dim  === null ? '∞' : (m.inj_dim  ?? '—');
+    return `<tr>
+      <td>${m.name}${tag}</td>
+      <td>${m.dim}</td>
+      <td>${m.top_vertices?.join(', ') || '—'}</td>
+      <td>${m.socle_vertices?.join(', ') || '—'}</td>
+      <td>${pd}</td>
+      <td>${id}</td>
+      <td>${m.is_brick ? '✓' : ''}</td>
+    </tr>`;
+  }).join('');
+
+  showCard(title, `
+    <div style="overflow-x:auto">
+    <table class="module-table">
+      <thead><tr>
+        <th>Module</th><th>dim</th><th>top</th><th>socle</th><th>pd</th><th>id</th><th>brick</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    </div>
+  `);
+}
+
+function showCard(title, html) {
+  setResults(`
+    <div class="result-card">
+      <div class="result-card-header">${title}</div>
+      <div class="result-card-body">${html}</div>
+    </div>
+  `);
+}
+
+function setResults(html) {
+  document.getElementById('results').innerHTML = html;
+}
+
+function setStatus(type, msg) {
+  const el = document.getElementById('load-status');
+  el.innerHTML = msg;
+  el.style.color = type === 'err' ? 'var(--error)' : type === 'ok' ? 'var(--success)' : 'var(--muted)';
+}
+
+function enableButtons(on) {
+  document.querySelectorAll('.btn-compute').forEach(b => b.disabled = !on);
+}
+
+async function apiFetch(path) {
+  try {
+    const res = await fetch(API + path);
+    const data = await res.json();
+    if (!res.ok) {
+      setResults(`<div class="result-card"><div class="result-card-body"><span class="err">Error: ${data.detail || JSON.stringify(data)}</span></div></div>`);
+      return null;
+    }
+    return data;
+  } catch(e) {
+    setResults(`<div class="result-card"><div class="result-card-body"><span class="err">Could not connect to server. Is it running on port 8000?</span></div></div>`);
+    return null;
+  }
+}
+
+// ── Preload example ───────────────────────────────────────────────────────────
+addArrow('a', '1', '2');
+addArrow('b', '2', '3');
+addArrow('c', '3', '4');
+</script>
+</body>
+</html>
